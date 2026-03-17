@@ -1,0 +1,25 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    /* Poori body ko fixed rakhenge taaki scroll inner containers mein ho */
+    @apply bg-black m-0 p-0 overflow-hidden;
+    height: 100vh;
+    width: 100vw;
+    font-family: 'JetBrains Mono', monospace; /* Futuristic font feel */
+  }
+
+  /* Scrollbar ko disable karne ka global hack */
+  * {
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  *::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+#root {
+  width: 100%;
+  height: 100%;
+}
