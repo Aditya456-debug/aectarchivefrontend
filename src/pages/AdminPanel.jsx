@@ -46,7 +46,7 @@ const AdminPanel = ({ onBack }) => {
 
   const [inspectedStudent, setInspectedStudent] = useState(null);
 
-  const BACKEND_URL = `http://${window.location.hostname}:5000`;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const courseStats = useMemo(() => {
       const counts = {};

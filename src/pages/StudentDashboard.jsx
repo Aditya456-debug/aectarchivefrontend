@@ -34,7 +34,7 @@ const StudentDashboard = () => {
   // 🔥 QR Scanner Reference (Saves camera state)
   const scannerRef = useRef(null);
 
-  const BACKEND_URL = `http://${window.location.hostname}:5000`;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const rawRegNo = localStorage.getItem('studentRegNo');
   const rawSection = localStorage.getItem('studentSection');

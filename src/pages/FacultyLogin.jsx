@@ -12,7 +12,7 @@ const FacultyLogin = ({ onBack, onLoginSuccess, onRegister }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const BACKEND_URL = `http://${window.location.hostname}:5000`; // Ensure this matches your network
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   useEffect(() => {
     const timer = setTimeout(() => {

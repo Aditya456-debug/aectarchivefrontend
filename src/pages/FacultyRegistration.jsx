@@ -17,7 +17,7 @@ const FacultyRegistration = ({ onBack }) => {
   // 🔒 Fetched Data State (From Admin)
   const [facultyData, setFacultyData] = useState({ facultyName: "" });
 
-  const BACKEND_URL = `http://${window.location.hostname}:5000`;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   // 🔥 STEP 1: Verify ID
   const handleVerify = async (e) => {

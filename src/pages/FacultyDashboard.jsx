@@ -16,7 +16,7 @@ const FacultyDashboard = () => {
   const totalStudents = 60;
 
   // 🔥 STICKLY UPDATED: Backend URL defined with your IP for Mobile Access
-const BACKEND_URL = `http://${window.location.hostname}:5000`;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   // NEW LOGIC: Lecture Storage & Sync
   const [lectures, setLectures] = useState([]);

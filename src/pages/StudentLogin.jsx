@@ -14,7 +14,7 @@ const StudentLogin = ({ onBack, onRegister, onLoginSuccess }) => {
   const [error, setError] = useState("");
 
   // 🔥 STICKLY UPDATED: Using your Network IP for mobile/desktop synchronization
-  const BACKEND_URL = `http://${window.location.hostname}:5000`;
+const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsSyncing(false);
