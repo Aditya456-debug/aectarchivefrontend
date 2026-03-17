@@ -40,6 +40,8 @@ const StudentRegistration = ({ onBack }) => {
     setError("");
 
     try {
+
+      
       const res = await axios.get(`https://aectarchivebackend.onrender.com/api/student/verify/${cleanRegNo}`);
       
       if (res.data.success) {

@@ -45,7 +45,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const fetchAvailableSubjects = async () => {
     try {
         const response = await axios.get(`${BACKEND_URL}/api/attendance/available-subjects`, {
-            params: { section: currentSection }
+            params: { section: currentSection },
+            withCredentials: true // 🔥 Added for session
         });
         if (response.data.success) {
             setAvailableSubjects(response.data.subjects);
@@ -63,6 +64,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             regNo: currentRegNo,
             subjectName: subject.subjectName,
             facultyEmail: subject.facultyEmail
+        }, {
+            withCredentials: true // 🔥 Added for session tracking
         });
 
         if (response.data.success) {
@@ -89,7 +92,9 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
   const fetchNotesFromVault = async () => {
     try {
-      const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`);
+      const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`, {
+          withCredentials: true // 🔥 Added
+      });
       setUploadedNotes(response.data);
     } catch (err) {
       console.error("❌ [UPLINK_ERROR]: Failed to fetch notes");
@@ -106,7 +111,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
         params: {
           regNo: currentRegNo,
           month: ledgerMonth
-        }
+        },
+        withCredentials: true // 🔥 Added to ensure student session is active
       });
       if (response.data.success) {
         setPersonalLedger(response.data.subjects); 
@@ -143,6 +149,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
         facultyEmail: qrPayload.email || "stark@acet.org", 
         subjectName: qrPayload.subject || "GENERAL_LECTURE",
         period: selectedPeriod
+      }, {
+        withCredentials: true // 🔥 CRITICAL FIX: Sends session cookies to Backend
       });
 
       if (response.data.success) {
@@ -157,7 +165,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   // 🔥 [NEW SCANNER LOGIC]: Triggers automatically when `isScanning` turns true and DOM is ready
   useEffect(() => {
     if (isScanning && !markingStatus) {
-      // Small delay ensures the div with id="reader" is fully rendered by React
       const timer = setTimeout(() => {
         try {
           const html5QrCode = new Html5Qrcode("reader");
@@ -167,21 +174,16 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             { facingMode: "environment" },
             { fps: 15, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
-              // ON SUCCESSFUL SCAN
               setScanResult(decodedText);
-              
               if (navigator.vibrate) navigator.vibrate(100);
 
-              // Stop camera immediately after successful read
               html5QrCode.stop().then(() => {
                 scannerRef.current = null;
                 setIsScanning(false);
                 handleMarkAttendance(decodedText);
               }).catch(err => console.log("Stop failed", err));
             },
-            (errorMessage) => {
-              // Ignore typical frame reading errors, they happen continuously
-            }
+            (errorMessage) => {}
           ).catch((err) => {
             console.error("Camera start failed:", err);
             setMarkingStatus("DENIED: CAMERA_ACCESS_FAILED");
@@ -194,23 +196,20 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
       return () => clearTimeout(timer);
     }
 
-    // Cleanup: Force stop camera if component unmounts or state changes
     return () => {
       if (scannerRef.current) {
         scannerRef.current.stop().catch(e => console.log("Force stop failed", e));
         scannerRef.current = null;
       }
     };
-  }, [isScanning, markingStatus]); // Runs when scanning starts or status changes
+  }, [isScanning, markingStatus]);
 
-  // Action handler for the button
   const initiateScanSequence = () => {
     setMarkingStatus(null);
     setScanResult(null);
-    setIsScanning(true); // This triggers the useEffect above
+    setIsScanning(true);
   };
 
-  // Safe manual terminate button
   const handleTerminateScan = () => {
       if (scannerRef.current) {
           scannerRef.current.stop().then(() => {
@@ -231,13 +230,11 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   return (
     <div className="min-h-screen bg-[#020617] text-cyan-400 font-mono p-3 md:p-10 pb-32 overflow-x-hidden text-left selection:bg-cyan-500/30">
       
-      {/* --- HEADER WITH SYNC PROTOCOL --- */}
       <header className="fixed top-0 left-0 w-full p-4 md:p-6 border-b-4 border-[#00ff41]/20 bg-black/60 backdrop-blur-xl flex justify-between items-center z-[100]">
         <div className="flex flex-col text-left">
           <span className="text-[10px] md:text-[12px] font-black tracking-[0.3em] uppercase text-white italic">Ω_STUDENT_NODE</span>
           <div className="flex items-center gap-3 mt-1">
             
-            {/* Live Sync Status Indicator */}
             <div className="flex items-center gap-1.5">
                <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-orange-500 animate-spin' : 'bg-[#00ff41] animate-pulse'}`} />
                <span className="text-[6px] md:text-[7px] opacity-60 tracking-widest uppercase italic text-[#00ff41]">
@@ -245,7 +242,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
                </span>
             </div>
 
-            {/* Manual Sync Button */}
             {!viewAttendanceVault && !viewFacultyList && !viewSubjectNotes && !viewSubjectPYQ && (
                <button 
                  onClick={syncNow}
@@ -526,6 +522,8 @@ const NoteCard = ({ subject, topic, faculty, date, id, _id, unit, fileUrl, title
       const response = await axios.post(`${BACKEND_URL}/api/verify-download`, {
         noteId: id || _id,
         fileUrl: fileUrl 
+      }, {
+        withCredentials: true // 🔥 Added
       });
 
       if (response.data.success) {
