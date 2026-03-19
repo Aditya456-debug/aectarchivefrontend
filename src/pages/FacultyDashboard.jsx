@@ -15,9 +15,9 @@ const FacultyDashboard = () => {
   const [timeLeft, setTimeLeft] = useState(10);
   const totalStudents = 60;
 
-  // 📱 NEW: Device Detection Logic for Fast Scanning
+  // 📱 NEW: Device detection for Responsive QR Size
   const isMobileNode = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const responsiveQRSize = isMobileNode ? 240 : 400; 
+  const responsiveQRSize = isMobileNode ? 240 : 400;
 
   // 🔥 STICKLY UPDATED: Backend URL defined with your IP for Mobile Access
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
@@ -74,7 +74,7 @@ const FacultyDashboard = () => {
     } catch (error) { console.error("DB_FETCH_FAILED"); }
   };
 
-  // 🔥 NEW: Ledger Auto-Refresh Logic (Real-time tracking)
+  // 🔥 NEW: Heartbeat Ledger Sync Logic (Real-time tracking)
   const refreshLedgerData = async () => {
     if (!sessionActive || !subjectName) return;
     try {
@@ -217,11 +217,11 @@ const FacultyDashboard = () => {
     fetchAllStudentsFromDB(); 
   }, [selectedSection]); 
 
-  // 🔥 NEW: Heartbeat effect for real-time ledger update
+  // 🔥 NEW: Ledger Auto-Refresh effect (5s Heartbeat)
   useEffect(() => {
     let pollInterval;
     if (activeTab === 'attendance' && sessionActive) {
-      pollInterval = setInterval(refreshLedgerData, 5000); // 5 sec heartbeat
+      pollInterval = setInterval(refreshLedgerData, 5000); 
     }
     return () => clearInterval(pollInterval);
   }, [activeTab, sessionActive, subjectName]);
@@ -520,8 +520,7 @@ const FacultyDashboard = () => {
                      <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
-                           {/* 🔥 UPDATED: Dynamic Size & Level H for UPI-speed scanning */}
-                           <QRCodeSVG value={qrToken} size={responsiveQRSize} level="H" includeMargin={true} />
+                           <QRCodeSVG value={qrToken} size={responsiveQRSize} level="H" includeMargin={true} />
                         </div>
                         <div className="grid grid-cols-2 gap-8 w-full border-t border-white/5 pt-10">
                            <div className="flex flex-col items-center gap-1">
@@ -615,7 +614,7 @@ const FacultyDashboard = () => {
                                                        <span className={s.isPresent ? 'text-[#00ff41] drop-shadow-[0_0_10px_#00ff41]' : 'text-red-500'}> {s.isPresent ? 'P' : 'A'} </span>
                                                    ) : <span className="opacity-10">-</span>}
                                                </td>
-                                           );
+                                      	);
                                       })}
                                   </tr>
                               ))}
@@ -683,7 +682,7 @@ const UploadCardHub = ({ title, type, accentColor, glow, onClick }) => (
         <div className="relative bg-[#020617] rounded-[2.3rem] md:rounded-[2.8rem] p-10 md:p-12 overflow-hidden h-full flex flex-col items-start text-left border-2 border-white/5">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(${accentColor} 2px, transparent 2px), linear-gradient(90deg, ${accentColor} 2px, transparent 2px)`, backgroundSize: '40px 40px' }} />
             <span className="text-5xl md:text-7xl mb-8 block drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">{type}</span>
-           <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white mb-4 leading-tight group-hover:text-white transition-colors">{title}</h3>
+            <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white mb-4 leading-tight group-hover:text-white transition-colors">{title}</h3>
             <div className="flex items-center gap-4"><div className="w-10 h-[3px]" style={{ backgroundColor: accentColor }} /><p className="text-[9px] opacity-30 uppercase tracking-[0.4em] font-black italic">Module_v4.2</p></div>
             <motion.div whileHover={{ rotate: 90 }} className="absolute bottom-8 right-10 w-14 h-14 rounded-2xl border-2 border-white/10 flex items-center justify-center text-3xl opacity-20 group-hover:opacity-100 group-hover:border-white/40 transition-all bg-black/40">⊕</motion.div>
         </div>
