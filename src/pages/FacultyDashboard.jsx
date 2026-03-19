@@ -15,10 +15,6 @@ const FacultyDashboard = () => {
   const [timeLeft, setTimeLeft] = useState(10);
   const totalStudents = 60;
 
-  // 📱 NEW: Device detection for Responsive QR Size
-  const isMobileNode = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const responsiveQRSize = isMobileNode ? 240 : 400;
-
   // 🔥 STICKLY UPDATED: Backend URL defined with your IP for Mobile Access
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
@@ -74,7 +70,7 @@ const FacultyDashboard = () => {
     } catch (error) { console.error("DB_FETCH_FAILED"); }
   };
 
-  // 🔥 NEW: Heartbeat Ledger Sync Logic (Real-time tracking)
+  // 🔥 NEURAL REFRESH: Live Ledger Polling (Works in background)
   const refreshLedgerData = async () => {
     if (!sessionActive || !subjectName) return;
     try {
@@ -93,7 +89,7 @@ const FacultyDashboard = () => {
           isPresent: presentRegNos.includes(student.collegeId)
         })));
       }
-    } catch (err) { console.log("LIVE_POLLING_IDLE"); }
+    } catch (err) { console.log("SYNC_IDLE"); }
   };
 
   // 🔥 [VAULT_LINK]: Fetch Unique Monthly Registers
@@ -217,13 +213,13 @@ const FacultyDashboard = () => {
     fetchAllStudentsFromDB(); 
   }, [selectedSection]); 
 
-  // 🔥 NEW: Ledger Auto-Refresh effect (5s Heartbeat)
+  // 🔥 AUTOMATIC HEARTBEAT: Har 5 sec mein ledger update karega
   useEffect(() => {
-    let pollInterval;
+    let poll;
     if (activeTab === 'attendance' && sessionActive) {
-      pollInterval = setInterval(refreshLedgerData, 5000); 
+      poll = setInterval(refreshLedgerData, 5000);
     }
-    return () => clearInterval(pollInterval);
+    return () => clearInterval(poll);
   }, [activeTab, sessionActive, subjectName]);
 
   const handleStartAttendance = async () => {
@@ -520,14 +516,15 @@ const FacultyDashboard = () => {
                      <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
-                           <QRCodeSVG value={qrToken} size={responsiveQRSize} level="H" includeMargin={true} />
+                            {/* 🔥 ORIGINAL DESIGN RESTORED: No dense level-H, clean look */}
+                           <QRCodeSVG value={qrToken} size={220} />
                         </div>
                         <div className="grid grid-cols-2 gap-8 w-full border-t border-white/5 pt-10">
                            <div className="flex flex-col items-center gap-1">
                               <p className="text-5xl font-black text-white tracking-tighter">{presentCount}</p>
                               <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">Present_Nodes</p>
                            </div>
-                           <div className="flex flex-col items-center gap-1">
+      0                    <div className="flex flex-col items-center gap-1">
                               <p className="text-5xl font-black text-[#00ff41] tracking-tighter">{timeLeft}s</p>
                               <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">Rotation_Sync</p>
                            </div>
@@ -614,7 +611,7 @@ const FacultyDashboard = () => {
                                                        <span className={s.isPresent ? 'text-[#00ff41] drop-shadow-[0_0_10px_#00ff41]' : 'text-red-500'}> {s.isPresent ? 'P' : 'A'} </span>
                                                    ) : <span className="opacity-10">-</span>}
                                                </td>
-                                      	);
+                                           );
                                       })}
                                   </tr>
                               ))}
@@ -629,7 +626,7 @@ const FacultyDashboard = () => {
             </motion.div>
           ) : null}
         </AnimatePresence>
-      </div>
+    </div>
 
       {/* --- ANIMATED MODALS --- */}
       <AnimatePresence>
@@ -656,7 +653,7 @@ const FacultyDashboard = () => {
                       <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Unit</label><input type="text" placeholder="UNIT_01" value={lectureForm.unit} onChange={e => setLectureForm({...lectureForm, unit: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
                       <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Time</label><input type="text" placeholder="10:00 AM" value={lectureForm.time} onChange={e => setLectureForm({...lectureForm, time: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
                     </div>
-                    <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                  <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
                     <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
