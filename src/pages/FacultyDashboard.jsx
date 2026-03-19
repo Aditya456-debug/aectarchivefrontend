@@ -70,27 +70,27 @@ const FacultyDashboard = () => {
     } catch (error) { console.error("DB_FETCH_FAILED"); }
   };
 
-  // 🔥 NEURAL REFRESH: Live Ledger Polling (Works in background)
-  const refreshLedgerData = async () => {
-    if (!sessionActive || !subjectName) return;
-    try {
-      const formattedDate = selectedDate.split('-').reverse().join('/');
-      const response = await axios.get(`${BACKEND_URL}/api/attendance/session-status`, {
-        params: {
-          facultyEmail: currentFacultyEmail,
-          subjectName: subjectName.toUpperCase(),
-          date: formattedDate
-        }
-      });
-      if (response.data.success) {
-        const presentRegNos = response.data.presentStudents.map(s => s.regNo);
-        setAttendance(prev => prev.map(student => ({
-          ...student,
-          isPresent: presentRegNos.includes(student.collegeId)
-        })));
-      }
-    } catch (err) { console.log("SYNC_IDLE"); }
-  };
+  // 🔥 NEURAL REFRESH: Live Ledger Polling (Works in background)
+  const refreshLedgerData = async () => {
+    if (!sessionActive || !subjectName) return;
+    try {
+      const formattedDate = selectedDate.split('-').reverse().join('/');
+      const response = await axios.get(`${BACKEND_URL}/api/attendance/session-status`, {
+        params: {
+          facultyEmail: currentFacultyEmail,
+          subjectName: subjectName.toUpperCase(),
+          date: formattedDate
+        }
+      });
+      if (response.data.success) {
+        const presentRegNos = response.data.presentStudents.map(s => s.regNo);
+        setAttendance(prev => prev.map(student => ({
+          ...student,
+          isPresent: presentRegNos.includes(student.collegeId)
+        })));
+      }
+    } catch (err) { console.log("SYNC_IDLE"); }
+  };
 
   // 🔥 [VAULT_LINK]: Fetch Unique Monthly Registers
   const fetchMyRegisters = async () => {
@@ -213,14 +213,14 @@ const FacultyDashboard = () => {
     fetchAllStudentsFromDB(); 
   }, [selectedSection]); 
 
-  // 🔥 AUTOMATIC HEARTBEAT: Har 5 sec mein ledger update karega
-  useEffect(() => {
-    let poll;
-    if (activeTab === 'attendance' && sessionActive) {
-      poll = setInterval(refreshLedgerData, 5000);
-    }
-    return () => clearInterval(poll);
-  }, [activeTab, sessionActive, subjectName]);
+  // 🔥 AUTOMATIC HEARTBEAT: Har 5 sec mein ledger update karega
+  useEffect(() => {
+    let poll;
+    if (activeTab === 'attendance' && sessionActive) {
+      poll = setInterval(refreshLedgerData, 5000);
+    }
+    return () => clearInterval(poll);
+  }, [activeTab, sessionActive, subjectName]);
 
   const handleStartAttendance = async () => {
     if (!subjectName) return alert("Bhai, pehle Subject ka naam toh likh lo!");
@@ -516,47 +516,40 @@ const FacultyDashboard = () => {
                      <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
-                            {/* 🔥 ORIGINAL DESIGN RESTORED: No dense level-H, clean look */}
-                           <QRCodeSVG value={qrToken} size={220} />
+                           <QRCodeSVG value={qrToken} size={220} level="H" />
                         </div>
-                        <div className="grid grid-cols-2 gap-8 w-full border-t border-white/5 pt-10">
-                           <div className="flex flex-col items-center gap-1">
-                              <p className="text-5xl font-black text-white tracking-tighter">{presentCount}</p>
-                              <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">Present_Nodes</p>
-                           </div>
-      0                    <div className="flex flex-col items-center gap-1">
-                              <p className="text-5xl font-black text-[#00ff41] tracking-tighter">{timeLeft}s</p>
-                              <p className="text-[8px] opacity-40 uppercase font-black tracking-widest">Rotation_Sync</p>
-                           </div>
+                        <div className="flex flex-col items-center gap-1 border-t border-white/5 pt-10">
+                           <p className="text-5xl font-black text-[#00ff41] tracking-tighter">{timeLeft}s</p>
+                           <p className="text-[8px] opacity-40 uppercase font-black tracking-widest italic">Rotation_Sync_Pulse</p>
                         </div>
                      </div>
                   </div>
                   <div className="bg-white/5 border-2 border-white/10 p-8 rounded-[2.5rem] flex flex-col gap-4">
-                      <p className="text-[9px] font-black text-white/30 uppercase tracking-[0.3em]">SESSION_METRICS</p>
+                      <p className="text-[9px] font-black text-[#00ff41] uppercase tracking-[0.3em] italic">SESSION_METRICS</p>
                       <div className="flex justify-between items-center"><span className="text-[10px] font-bold opacity-60 uppercase">Date</span><span className="text-[10px] font-black text-[#00ff41]">{selectedDate}</span></div>
-                      <div className="flex justify-between items-center"><span className="text-[10px] font-bold opacity-60 uppercase">Period</span><span className="text-[10px] font-black text-[#00ff41]">P-{selectedPeriod}</span></div>
-                      <div className="flex justify-between items-center"><span className="text-[10px] font-bold opacity-60 uppercase">Vault</span><span className="text-[10px] font-black text-[#00ff41]">ACTIVE</span></div>
+                      <div className="flex justify-between items-center border-t border-white/5 pt-2"><span className="text-[10px] font-bold opacity-60 uppercase">Handshake</span><span className="text-[10px] font-black text-[#00ff41]">ENCRYPTED</span></div>
+                      <div className="flex justify-between items-center border-t border-white/5 pt-2"><span className="text-[10px] font-bold opacity-60 uppercase">Vault_Status</span><span className="text-[10px] font-black text-[#00ff41]">LOCKED_ACTIVE</span></div>
                   </div>
                 </div>
 
-                {/* --- MANUAL TABLE COLUMN --- */}
+                {/* --- MANUAL TABLE COLUMN (LARGER & RESPONSIVE) --- */}
                 <div className="lg:w-2/3">
                   <div className="rounded-[3rem] border-2 border-white/10 bg-white/[0.02] overflow-hidden backdrop-blur-xl h-full shadow-2xl">
                      <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
-                        <div className="flex flex-col"><h5 className="text-xl font-black text-white italic uppercase tracking-tighter">Manual_Terminal</h5><p className="text-[7px] opacity-40 uppercase font-black tracking-widest">Accessing_Student_Nodes_Database</p></div>
+                        <div className="flex flex-col text-left"><h5 className="text-xl font-black text-white italic uppercase tracking-tighter">Manual_Terminal_v4.2</h5><p className="text-[7px] opacity-40 uppercase font-black tracking-widest text-[#00ff41]">Packet_Injection_Protocol_Enabled</p></div>
                         <div className="relative w-full sm:w-64">
-                          <input type="text" placeholder="FILTER_IDENTITY..." onChange={(e) => setSearchID(e.target.value)} className="w-full bg-black/40 border-2 border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black outline-none focus:border-[#00ff41] text-white placeholder:opacity-20" />
+                          <input type="text" placeholder="IDENTITY_PROBE..." onChange={(e) => setSearchID(e.target.value)} className="w-full bg-black/40 border-2 border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black outline-none focus:border-[#00ff41] text-white placeholder:opacity-20" />
                           <span className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 text-xs">🔍</span>
                         </div>
                      </div>
-                     <div className="max-h-[700px] overflow-y-auto no-scrollbar">
+                     <div className="max-h-[900px] md:max-h-[850px] overflow-y-auto no-scrollbar">
                         <table className="w-full text-left font-mono">
                            <tbody className="divide-y divide-white/5">
                               {filteredAttendance.map((student, idx) => (
                                  <tr key={student.rollNo} className={`transition-all duration-500 group ${student.isPresent ? 'bg-[#00ff41]/5' : 'hover:bg-white/[0.03]'}`}>
                                     <td className="p-6 text-[10px] font-black opacity-30 text-center">{student.rollNo}</td>
                                     <td className="p-6 text-xs font-black text-[#00ff41]">{student.collegeId}</td>
-                                    <td className="p-6"><div className="flex flex-col"><span className="text-sm font-black uppercase italic tracking-tighter group-hover:translate-x-1 transition-transform">{student.name}</span></div></td>
+                                    <td className="p-6"><div className="flex flex-col text-left"><span className="text-sm font-black uppercase italic tracking-tighter group-hover:translate-x-1 transition-transform">{student.name}</span></div></td>
                                     <td className="p-6">
                                       <div className="flex justify-center gap-3">
                                        <button onClick={() => toggleAttendance(attendance.indexOf(student), true)} className={`w-12 h-12 rounded-2xl font-black text-sm transition-all flex items-center justify-center ${student.isPresent ? 'bg-[#00ff41] text-black shadow-[0_0_20px_#00ff41]' : 'border-2 border-white/10 text-white/20 hover:border-[#00ff41]'}`}>P</button>
@@ -572,22 +565,22 @@ const FacultyDashboard = () => {
                 </div>
               </div>
 
-              {/* --- BOTTOM LEDGER SECTION --- */}
+              {/* --- BOTTOM LEDGER SECTION (EXPANDED) --- */}
               <div className="mt-16 w-full border-4 border-[#00ff41] rounded-[3.5rem] overflow-hidden bg-black/80 shadow-[0_0_50px_rgba(0,255,65,0.2)]">
                   <div className="p-10 bg-[#00ff41]/10 border-b border-[#00ff41]/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                      <div className="border-l-4 border-[#00ff41] pl-6">
+                      <div className="border-l-4 border-[#00ff41] pl-6 text-left">
                           <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Live_Attendance_Ledger_<span className="text-[#00ff41]">v4.0</span></h3>
-                          <p className="text-[9px] opacity-40 uppercase font-black tracking-[0.5em] mt-1">{subjectName} // {selectedMonth} 2025 // Section_{selectedSection}</p>
+                          <p className="text-[9px] opacity-40 uppercase font-black tracking-[0.5em] mt-1 text-[#00ff41] italic">Neural_Resonance_Sync_Protocol_Active</p>
                       </div>
                       <button onClick={exportToExcel} className="group px-12 py-5 bg-[#00ff41] text-black font-black text-[11px] rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(0,255,65,0.5)] uppercase tracking-widest flex items-center gap-3">
                         <span className="text-xl group-hover:rotate-12 transition-transform">📊</span> Generate_Excel_Vault
                       </button>
                   </div>
-                  <div className="overflow-x-auto no-scrollbar">
+                  <div className="overflow-x-auto no-scrollbar max-h-[800px]">
                       <table className="w-full text-left font-mono border-collapse">
                           <thead>
                               <tr className="bg-[#00ff41]/10 text-[#00ff41] text-[10px] uppercase font-black tracking-widest border-b border-[#00ff41]/20">
-                                  <th className="p-8 border-r border-[#00ff41]/10 min-w-[200px] sticky left-0 bg-[#020617] z-10">Student_Identity</th>
+                                  <th className="p-8 border-r border-[#00ff41]/10 min-w-[200px] sticky left-0 bg-[#020617] z-10">Identity_Handshake</th>
                                   {[...Array(getDaysInMonth(selectedMonth))].map((_, i) => (
                                       <th key={i} className={`p-4 text-center border-r border-[#00ff41]/10 min-w-[60px] ${parseInt(selectedDate.split('-')[2]) === (i+1) ? 'bg-[#00ff41] text-black' : ''}`}> {i + 1} </th>
                                   ))}
@@ -597,9 +590,9 @@ const FacultyDashboard = () => {
                               {attendance.map((s, i) => (
                                   <tr key={i} className="hover:bg-[#00ff41]/5 transition-colors group">
                                       <td className="p-8 border-r border-[#00ff41]/10 sticky left-0 bg-[#020617] z-10 group-hover:bg-[#00ff41]/10 transition-colors">
-                                          <div className="flex flex-col">
+                                          <div className="flex flex-col text-left">
                                               <span className="text-white text-sm font-black uppercase italic tracking-tighter">{s.name}</span>
-                                              <span className="text-[#00ff41] text-[10px] font-black opacity-50">{s.collegeId}</span>
+                                              <span className="text-[#00ff41] text-[10px] font-black opacity-50 uppercase">Packet: {s.collegeId}</span>
                                           </div>
                                       </td>
                                       {[...Array(getDaysInMonth(selectedMonth))].map((_, dayIdx) => {
@@ -626,7 +619,7 @@ const FacultyDashboard = () => {
             </motion.div>
           ) : null}
         </AnimatePresence>
-    </div>
+      </div>
 
       {/* --- ANIMATED MODALS --- */}
       <AnimatePresence>
@@ -636,7 +629,7 @@ const FacultyDashboard = () => {
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
               
               <div className="flex flex-row justify-between items-center mb-12 w-full">
-                <div className="border-l-4 border-cyan-400 pl-6"><h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">Uplink_<span className="text-cyan-400">{modalType}</span></h3><p className="text-[8px] opacity-30 uppercase font-black tracking-[0.3em] mt-1">Authorized_Access_Only</p></div>
+                <div className="border-l-4 border-cyan-400 pl-6 text-left"><h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">Uplink_<span className="text-cyan-400">{modalType}</span></h3><p className="text-[8px] opacity-30 uppercase font-black tracking-[0.3em] mt-1">Authorized_Access_Only</p></div>
                 <button onClick={() => { setShowModal(false); setEditingRegister(null); }} className="w-12 h-12 md:w-16 md:h-16 rounded-2xl border-2 border-white/10 flex flex-shrink-0 items-center justify-center hover:bg-red-500/20 hover:border-red-500/50 transition-all text-2xl bg-black/50 text-white">✕</button>
               </div>
 
@@ -650,15 +643,15 @@ const FacultyDashboard = () => {
                 ) : modalType === "Lecture" ? (
                   <div className="space-y-6">
                     <div className="grid grid-cols-2 gap-6">
-                      <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Unit</label><input type="text" placeholder="UNIT_01" value={lectureForm.unit} onChange={e => setLectureForm({...lectureForm, unit: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
-                      <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Time</label><input type="text" placeholder="10:00 AM" value={lectureForm.time} onChange={e => setLectureForm({...lectureForm, time: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Unit</label><input type="text" placeholder="UNIT_01" value={lectureForm.unit} onChange={e => setLectureForm({...lectureForm, unit: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Time</label><input type="text" placeholder="10:00 AM" value={lectureForm.time} onChange={e => setLectureForm({...lectureForm, time: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
                     </div>
-                  <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
-                    <div className="flex flex-col gap-2"><label className="text-[9px] font-black opacity-30 uppercase">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
+                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-white/10 rounded-[2rem] gap-6">
+                  <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-white/10 rounded-[2rem] gap-6 text-center">
                     <span className="text-6xl animate-bounce">📑</span>
                     <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.3em]">Module_In_Development</p>
                   </div>
