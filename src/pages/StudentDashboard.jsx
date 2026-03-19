@@ -46,7 +46,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
     try {
         const response = await axios.get(`${BACKEND_URL}/api/attendance/available-subjects`, {
             params: { section: currentSection },
-            withCredentials: true // 🔥 Added for session
+            withCredentials: true 
         });
         if (response.data.success) {
             setAvailableSubjects(response.data.subjects);
@@ -65,7 +65,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             subjectName: subject.subjectName,
             facultyEmail: subject.facultyEmail
         }, {
-            withCredentials: true // 🔥 Added for session tracking
+            withCredentials: true 
         });
 
         if (response.data.success) {
@@ -85,7 +85,6 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
       }
   }, [viewFacultyList]);
 
-
   const filteredSubjects = availableSubjects.filter(sub => 
     sub.subjectName.toLowerCase().includes(facultySearch.toLowerCase())
   );
@@ -93,7 +92,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
   const fetchNotesFromVault = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`, {
-          withCredentials: true // 🔥 Added
+          withCredentials: true 
       });
       setUploadedNotes(response.data);
     } catch (err) {
@@ -112,7 +111,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
           regNo: currentRegNo,
           month: ledgerMonth
         },
-        withCredentials: true // 🔥 Added to ensure student session is active
+        withCredentials: true 
       });
       if (response.data.success) {
         setPersonalLedger(response.data.subjects); 
@@ -138,27 +137,35 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
       setMarkingStatus("PROCESSING...");
       
       let qrPayload;
+      // 🔥 OPERATION "KILL STARK" SUCCESSFUL!
+      // Ab code strictly JSON parse karega, koi fallback nahi!
       try {
           qrPayload = JSON.parse(decodedData);
+          if (!qrPayload.email || !qrPayload.subject) throw new Error("Invalid Format");
       } catch (e) {
-          qrPayload = { subject: decodedData, email: "stark@acet.org" };
+          // Agar QR galat hai (JSON nahi hai) toh backend ko pareshan hi mat karo
+          setMarkingStatus("DENIED: INVALID_QR_DETECTED");
+          return;
       }
 
+      // API Call: No 'period', no 'stark@acet.org'
       const response = await axios.post(`${BACKEND_URL}/api/attendance/mark-me`, {
         regNo: currentRegNo, 
-        facultyEmail: qrPayload.email || "stark@acet.org", 
-        subjectName: qrPayload.subject || "GENERAL_LECTURE",
-        period: selectedPeriod
+        facultyEmail: qrPayload.email,  // Purely dynamic from QR
+        subjectName: qrPayload.subject  // Purely dynamic from QR
       }, {
-        withCredentials: true // 🔥 CRITICAL FIX: Sends session cookies to Backend
+        withCredentials: true 
       });
 
       if (response.data.success) {
         setMarkingStatus("SUCCESS: ATTENDANCE_LOCKED");
-        alert(`✅ [SYNC_COMPLETE]: Attendance marked for ${qrPayload.subject || 'Lecture'}!`);
+        // Haptic feedback for success
+        if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
       }
     } catch (err) {
       setMarkingStatus("DENIED: " + (err.response?.data?.msg || "ERROR"));
+      // Haptic feedback for failure
+      if (navigator.vibrate) navigator.vibrate(300);
     }
   };
 
@@ -175,7 +182,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             { fps: 15, qrbox: { width: 250, height: 250 } },
             (decodedText) => {
               setScanResult(decodedText);
-              if (navigator.vibrate) navigator.vibrate(100);
+              if (navigator.vibrate) navigator.vibrate(50); // Light scan vibration
 
               html5QrCode.stop().then(() => {
                 scannerRef.current = null;
@@ -440,20 +447,8 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
                 <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="relative p-[5px] md:p-[8px] rounded-[2rem] md:rounded-[3rem] overflow-hidden group cursor-pointer">
                     <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 4, repeat: Infinity, ease: "linear" }} className="absolute inset-[-200%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-100" />
                     <div className="relative bg-[#020617] rounded-[1.8rem] md:rounded-[2.7rem] p-8 md:p-14 overflow-hidden flex flex-col items-center justify-center border-2 border-white/5">
-                        <div className="relative z-10 mb-8 w-full max-w-xs">
-                          <label className="text-[10px] font-black text-[#00ff41] uppercase tracking-[0.3em] mb-4 block text-center">Assign_Scan_Period</label>
-                          <div className="grid grid-cols-4 gap-2">
-                             {[1,2,3,4,5,6,7,8].map((p) => (
-                               <button 
-                                key={p} 
-                                onClick={(e) => { e.stopPropagation(); setSelectedPeriod(p); }}
-                                className={`py-2 rounded-lg border-2 font-black text-[10px] transition-all ${selectedPeriod === p ? 'bg-[#00ff41] text-black border-[#00ff41]' : 'bg-white/5 border-white/10 text-white/40'}`}
-                               >P{p}</button>
-                             ))}
-                          </div>
-                        </div>
-
-                        {/* 🔥 ACTION BUTTON MOUNT SCANNER */}
+                        
+                        {/* 🔥 ACTION BUTTON MOUNT SCANNER (Period Logic Removed for UI Simplicity) */}
                         <div className="relative z-10 text-center flex flex-col items-center" onClick={initiateScanSequence}>
                             <h2 className="text-3xl md:text-6xl font-black uppercase italic tracking-tighter leading-none mb-4">Init_<span className="text-[#00ff41]">Uplink</span></h2>
                             <div className="bg-[#00ff41] text-black text-[9px] md:text-xs font-black px-8 py-3 rounded-full uppercase tracking-[0.3em] shadow-[0_0_20px_#00ff41]">Launch_Scanner</div>
@@ -488,7 +483,7 @@ const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
             <div className="w-full max-w-sm">
                 <div className={`bg-[#020617] border-8 ${markingStatus?.includes("SUCCESS") ? 'border-[#00ff41]' : markingStatus?.includes("DENIED") ? 'border-red-500' : 'border-[#00ff41]'} p-8 rounded-[2.5rem] text-center transition-colors duration-500`}>
                     <h3 className="text-xl font-black text-white italic tracking-tighter uppercase mb-4">
-                      {markingStatus || (isScanning ? 'SCANNING_PERIOD_' + selectedPeriod : 'UPLINK_INITIALIZED')}
+                      {markingStatus || (isScanning ? 'SCANNER_ACTIVE' : 'UPLINK_INITIALIZED')}
                     </h3>
                     
                     {/* 🔥 THE SCANNER MOUNT POINT */}
@@ -523,7 +518,7 @@ const NoteCard = ({ subject, topic, faculty, date, id, _id, unit, fileUrl, title
         noteId: id || _id,
         fileUrl: fileUrl 
       }, {
-        withCredentials: true // 🔥 Added
+        withCredentials: true 
       });
 
       if (response.data.success) {

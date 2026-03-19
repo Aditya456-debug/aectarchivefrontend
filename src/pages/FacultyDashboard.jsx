@@ -18,8 +18,8 @@ const FacultyDashboard = () => {
   // 🔥 STICKLY UPDATED: Backend URL defined with your IP for Mobile Access
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
 
-  // 🔥 NEURAL_LINK_FIX: Hardcoded 'stark' hata kar dynamic storage email use kiya (drag@gamil.com)
-  const currentFacultyEmail = localStorage.getItem('facultyEmail') || "drag@gamil.com";
+  // 🔥 NEURAL_LINK_FIX: Hardcoded 'stark' hata kar dynamic storage email use kiya (vedanshisaraws@gmail.com)
+  const currentFacultyEmail = localStorage.getItem('facultyEmail') || "vedanshisaraws@gmail.com";
 
   // NEW LOGIC: Lecture Storage & Sync
   const [lectures, setLectures] = useState([]);
