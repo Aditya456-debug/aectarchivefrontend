@@ -29,6 +29,9 @@ const FacultyDashboard = () => {
   // 🔥 NEW: Attendance Session State
   const [sessionActive, setSessionActive] = useState(false);
 
+  // 🔥 NEW: Broadcast Message State
+  const [broadcastMsg, setBroadcastMsg] = useState("");
+
   // 🔥 NEW FIELDS (Strictly Updated for Create Register)
   const [selectedPeriod, setSelectedPeriod] = useState(1); // Internal default
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); 
@@ -262,6 +265,25 @@ const FacultyDashboard = () => {
     setSessionActive(false);
     setShowQR(false);
   };
+
+  // 🔥 NEW: Broadcast Handling
+  const handleBroadcastUpload = async () => {
+    if (!broadcastMsg) return alert("Bhai, message toh type kar!");
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/upload-note`, {
+        title: "Broadcast",
+        subject: "General",
+        facultyEmail: currentFacultyEmail,
+        category: "Broadcast",
+        message: broadcastMsg // Ensure backend saves this message field
+      });
+      if (response.data.success) {
+        alert(`🚀 SYNC_SUCCESS: Broadcast Alert Sent!`);
+        setShowModal(false);
+        setBroadcastMsg("");
+      }
+    } catch (error) { alert("System Error: Backend Uplink Fail!"); }
+  }
 
   const handleNoteUpload = async () => {
     if (!lectureForm.file) return alert("Bhai, pehle file toh select kar le!");
@@ -652,8 +674,25 @@ const FacultyDashboard = () => {
                     <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
-                ) : (
-                  // 🔥 THE MAGIC HAPPENS HERE: Dropdown replaced by an Input field
+                ) : modalType === "Broadcast" ? (
+                  // 🔥 Broadcast UI: Sirf Message Type karne ke liye (No File Upload)
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-2 text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase">Broadcast_Message</label>
+                        <textarea 
+                            rows="5" 
+                            placeholder="TYPE_YOUR_ALERT_HERE..." 
+                            value={broadcastMsg} 
+                            onChange={e => setBroadcastMsg(e.target.value)} 
+                            className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-yellow-400 text-white resize-none" 
+                        />
+                    </div>
+                    <button onClick={handleBroadcastUpload} className="w-full py-5 bg-yellow-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(250,204,21,0.3)] mt-6 hover:scale-[1.02] transition-transform">
+                        Transmit_Broadcast
+                    </button>
+                  </div>
+                ) : (
+                  // Document Upload UI (Notes, PYQs, Assignments)
                   <div className="space-y-6">
                     <div className="flex flex-col gap-2 text-left">
                         <label className="text-[9px] font-black opacity-30 uppercase">Packet_Title</label>
@@ -662,7 +701,6 @@ const FacultyDashboard = () => {
                     
                     <div className="flex flex-col gap-2 text-left">
                         <label className="text-[9px] font-black opacity-30 uppercase">Target_Subject</label>
-                        {/* 🔥 FIX: Normal text input so you can type any subject name freely */}
                         <input 
                             type="text" 
                             placeholder="EX: OS / CN / JAVA" 
@@ -688,7 +726,7 @@ const FacultyDashboard = () => {
                         </div>
                     </div>
 
-                    <button onClick={handleNoteUpload} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(34,211,238,0.3)] mt-6">
+                    <button onClick={handleNoteUpload} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(34,211,238,0.3)] mt-6 hover:scale-[1.02] transition-transform">
                         Sync_Packet_to_Vault
                     </button>
                   </div>
