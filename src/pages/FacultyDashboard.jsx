@@ -268,16 +268,18 @@ const FacultyDashboard = () => {
     const formData = new FormData();
     formData.append('file', lectureForm.file);
     formData.append('title', lectureForm.title || "Untitled_Packet");
+    // 🔥 Added subjectName manually if not set
+    formData.append('subject', lectureForm.topic || subjectName || "General"); 
     formData.append('facultyEmail', currentFacultyEmail);
-    formData.append('category', modalType);
+    formData.append('category', modalType); // Sends if it's PYQ, Assignment etc.
     try {
       const response = await axios.post(`${BACKEND_URL}/api/upload-note`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
       });
       if (response.data.success) {
-        alert("🚀 SYNC_SUCCESS!");
+        alert(`🚀 SYNC_SUCCESS: ${modalType} Uploaded!`);
         setShowModal(false);
-        setLectureForm({ ...lectureForm, file: null, title: '' });
+        setLectureForm({ unit: '', date: '', topic: '', desc: '', time: '', file: null, title: '' });
       }
     } catch (error) { alert("System Error: Backend Uplink Fail!"); }
   };
@@ -516,7 +518,7 @@ const FacultyDashboard = () => {
                      <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
-                           <QRCodeSVG value={qrToken} size={220} level="H" />
+                           <QRCodeSVG value={qrToken} size={220} />
                         </div>
                         <div className="flex flex-col items-center gap-1 border-t border-white/5 pt-10">
                            <p className="text-5xl font-black text-[#00ff41] tracking-tighter">{timeLeft}s</p>
@@ -651,9 +653,43 @@ const FacultyDashboard = () => {
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
                 ) : (
-                  <div className="flex flex-col items-center justify-center p-20 border-2 border-dashed border-white/10 rounded-[2rem] gap-6 text-center">
-                    <span className="text-6xl animate-bounce">📑</span>
-                    <p className="text-[10px] font-black opacity-40 uppercase tracking-[0.3em]">Module_In_Development</p>
+                  // 🔥 THE MAGIC HAPPENS HERE: Real File Upload Form replaces "Module in Dev"
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-2 text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase">Packet_Title</label>
+                        <input type="text" placeholder="EX: MODULE_1_NOTES" value={lectureForm.title} onChange={e => setLectureForm({...lectureForm, title: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-cyan-400 text-white" />
+                    </div>
+                    
+                    <div className="flex flex-col gap-2 text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase">Target_Subject</label>
+                        <select value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-cyan-400 text-cyan-400 uppercase font-black text-[10px]">
+                            <option value="" className="bg-black text-white/50">SELECT_SUBJECT_UPLINK</option>
+                            {/* Dynamically list assigned subjects so faculty doesn't type manually */}
+                            {assignedNodes.map((node, idx) => (
+                                <option key={idx} value={node.subject} className="bg-black text-white">{node.subject}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-2 text-left mt-4">
+                        <label className="text-[9px] font-black opacity-30 uppercase">Select_Data_Packet (PDF/DOC)</label>
+                        <div className="relative border-2 border-dashed border-white/20 p-8 rounded-2xl hover:border-cyan-400/50 transition-colors flex flex-col items-center justify-center bg-black/20">
+                            <input 
+                                type="file" 
+                                accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" 
+                                onChange={e => setLectureForm({...lectureForm, file: e.target.files[0]})} 
+                                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" 
+                            />
+                            <span className="text-3xl mb-2">📥</span>
+                            <span className="text-[10px] font-black uppercase text-cyan-400">
+                                {lectureForm.file ? lectureForm.file.name : "CLICK_OR_DRAG_TO_MOUNT_FILE"}
+                            </span>
+                        </div>
+                    </div>
+
+                    <button onClick={handleNoteUpload} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(34,211,238,0.3)] mt-6">
+                        Sync_Packet_to_Vault
+                    </button>
                   </div>
                 )}
               </div>
