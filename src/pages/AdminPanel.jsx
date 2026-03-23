@@ -443,7 +443,7 @@ const AdminPanel = ({ onBack }) => {
     const exportData = processedStudents.map(s => ({
         "RegNo": s.regNo || s.collegeId || s.rollNo || "N/A",
         "Name": s.name || "N/A",
-        "Year": s.year || "", // 🔥 NO DEFAULT '1' EXPORT EITHER
+        "Year": s.year || "", 
         "Course": s.course || "N/A",
         "Semester": s.semester || "N/A",
         "Section": s.section || "N/A",
@@ -686,7 +686,7 @@ const AdminPanel = ({ onBack }) => {
                       <RecordPill title="STUDENTS" count={studentList.length} color="#22d3ee" icon="👥" isInteractive={true} />
                     </div>
                     <div onClick={() => setIsFacultyExpanded(true)} className="cursor-pointer">
-                      <RecordPill title="FACULTY_REGISTRY" count={facultyList.filter(f => f.isAdminApproved).length} color="#00ff41" icon="👨‍🏫" isInteractive={true} />
+                      <RecordPill title="FACULTY_REGISTRY" count={facultyList.filter(f => f.isAdminApproved !== false).length} color="#00ff41" icon="👨‍🏫" isInteractive={true} />
                     </div>
                   </div>
 
@@ -967,147 +967,212 @@ const AdminPanel = ({ onBack }) => {
                     <button onClick={() => setIsFacultyExpanded(false)} className="w-fit text-[10px] font-black border border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase tracking-widest bg-white/5">Back_To_Core</button>
                   </div>
 
-                  {/* 🔥 NEW: PENDING APPROVALS SECTION - CRASH PROOF NOW */}
-                  {facultyList.filter(f => !f.isAdminApproved).length > 0 && (
-                      <div className="mb-8">
-                          <h4 className="text-[10px] font-black text-orange-500 tracking-[0.3em] uppercase mb-4 pl-2 flex items-center gap-2">
-                              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Pending Access Requests
-                          </h4>
-                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                              {facultyList.filter(f => !f.isAdminApproved).map(f => (
-                                  <div key={f._id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
-                                      <div>
-                                          <h4 className="text-lg font-black text-white italic uppercase tracking-tighter">{f.facultyName}</h4>
-                                          <p className="text-[9px] text-white/50 tracking-widest mt-1">{f.emailID}</p>
-                                          <p className="text-[9px] text-orange-500/80 font-bold uppercase mt-2">
-                                              {/* THIS WAS THE BUG. CRASH PROOFED NOW */}
-                                              Requested Courses: {f.courses && Array.isArray(f.courses) ? f.courses.join(', ') : "NONE"}
+                  {/* 🔥 NEW: PENDING APPROVALS SECTION - CRASH PROOF NOW */}
+                  {facultyList.filter(f => !f.isAdminApproved).length > 0 && (
+                      <div className="mb-8">
+                          <h4 className="text-[10px] font-black text-orange-500 tracking-[0.3em] uppercase mb-4 pl-2 flex items-center gap-2">
+                              <span className="w-2 h-2 rounded-full bg-orange-500 animate-pulse"></span> Pending Access Requests
+                          </h4>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                              {facultyList.filter(f => !f.isAdminApproved).map(f => (
+                                  <div key={f._id || f.id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
+                                      <div>
+                                          <h4 className="text-lg font-black text-white italic uppercase tracking-tighter">{f.facultyName || f.name}</h4>
+                                          <p className="text-[9px] text-white/50 tracking-widest mt-1">{f.emailID || f.email}</p>
+                                          <p className="text-[9px] text-orange-500/80 font-bold uppercase mt-2">
+                                              Requested Courses: {f.courses && Array.isArray(f.courses) && f.courses.length > 0 ? f.courses.join(', ') : "NONE"}
                                           </p>
-                                      </div>
-                                      <div className="mt-4 flex gap-2">
-                                          <button onClick={() => approveFaculty(f._id)} className="flex-1 bg-orange-500 hover:bg-orange-400 text-black py-2 rounded-xl text-[9px] font-black tracking-widest uppercase transition-colors">
-                                              Approve_&_Generate_ID
-                                          </button>
-                                          <button onClick={() => terminateNode(f._id)} className="px-4 border border-red-500/30 text-red-500 hover:bg-red-500/10 rounded-xl text-[9px] font-black transition-colors">
-                                              Deny
-                                          </button>
-                                      </div>
-                                  </div>
-                              ))}
-                          </div>
-                      </div>
-                  )}
+                                      </div>
+                                      <div className="mt-4 flex gap-2">
+                                          <button onClick={() => approveFaculty(f._id || f.id)} className="flex-1 bg-orange-500 hover:bg-orange-400 text-black py-2 rounded-xl text-[9px] font-black tracking-widest uppercase transition-colors">
+                                              Approve_&_Generate_ID
+                                          </button>
+                                          <button onClick={() => terminateNode(f._id || f.id)} className="px-4 border border-red-500/30 text-red-500 hover:bg-red-500/10 rounded-xl text-[9px] font-black transition-colors">
+                                              Deny
+                                          </button>
+                                      </div>
+                                  </div>
+                              ))}
+                          </div>
+                      </div>
+                  )}
 
-                  {/* ACTIVE REGISTRY SECTION */}
-                  <h4 className="text-[10px] font-black text-[#00ff41]/50 tracking-[0.3em] uppercase mb-4 pl-2 border-t border-white/5 pt-8">Active Registry</h4>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
-                    {facultyList.filter(f => f.isAdminApproved).map((f) => (
-                      <div key={f._id || f.id} onClick={() => setSelectedFacultyResources(f)} className="bg-white/[0.03] border-2 border-white/10 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] relative group hover:border-[#00ff41]/50 transition-all cursor-pointer">
-                        <div className="absolute top-6 right-6 flex gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
-                            <button onClick={(e) => {e.stopPropagation(); triggerEdit(f);}} className="text-[10px] font-black text-cyan-400 hover:underline">EDIT</button>
-                            <button onClick={(e) => {e.stopPropagation(); terminateNode(f._id || f.id);}} className="text-[10px] font-black text-red-500 hover:underline">TERMINATE</button>
-                        </div>
-                        <span className="text-[10px] font-black bg-[#00ff41] text-black px-3 py-1 rounded uppercase">{f.facultyID || "VERIFIED"}</span>
-                        <h4 className="text-xl md:text-2xl font-black text-white italic uppercase mt-6 tracking-tighter leading-none">{f.facultyName || f.name}</h4>
-                        <p className="text-[11px] text-[#00ff41]/60 font-bold mt-2 lowercase truncate">{f.emailID || f.email}</p>
-                        <div className="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-[10px] md:text-xs font-black text-white/40 uppercase italic">
-                           {/* CRASH PROOFED NOW */}
-                           <span>{f.courses && Array.isArray(f.courses) && f.courses.length > 0 ? f.courses.join(", ") : "PENDING_SETUP"}</span>
-                           <span className="text-[9px] font-black text-[#00ff41] animate-pulse">VAULT</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </motion.div>
-        )}
+                  {/* ACTIVE REGISTRY SECTION */}
+                  <h4 className="text-[10px] font-black text-[#00ff41]/50 tracking-[0.3em] uppercase mb-4 pl-2 border-t border-white/5 pt-8">Active Registry</h4>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+                    {facultyList.filter(f => f.isAdminApproved).map((f) => (
+                      <div key={f._id || f.id} onClick={() => setSelectedFacultyResources(f)} className="bg-white/[0.03] border-2 border-white/10 p-6 md:p-8 rounded-[2rem] md:rounded-[2.5rem] relative group hover:border-[#00ff41]/50 transition-all cursor-pointer">
+                        <div className="absolute top-6 right-6 flex gap-3 opacity-40 group-hover:opacity-100 transition-opacity">
+                            <button onClick={(e) => {e.stopPropagation(); triggerEdit(f);}} className="text-[10px] font-black text-cyan-400 hover:underline">EDIT</button>
+                            <button onClick={(e) => {e.stopPropagation(); terminateNode(f._id || f.id);}} className="text-[10px] font-black text-red-500 hover:underline">TERMINATE</button>
+                        </div>
+                        <span className="text-[10px] font-black bg-[#00ff41] text-black px-3 py-1 rounded uppercase">{f.facultyID || "VERIFIED"}</span>
+                        <h4 className="text-xl md:text-2xl font-black text-white italic uppercase mt-6 tracking-tighter leading-none">{f.facultyName || f.name}</h4>
+                        <p className="text-[11px] text-[#00ff41]/60 font-bold mt-2 lowercase truncate">{f.emailID || f.email}</p>
+                        <div className="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-[10px] md:text-xs font-black text-white/40 uppercase italic">
+                           <span>{f.courses && Array.isArray(f.courses) && f.courses.length > 0 ? f.courses.join(", ") : "PENDING_SETUP"}</span>
+                           <span className="text-[9px] font-black text-[#00ff41] animate-pulse">VAULT</span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </motion.div>
+        )}
 
-        {activeTab === "NEURAL_LINK" && (
-          <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 text-left pb-20">
-            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter">
-                Neural_Link <span className="text-[#a855f7]">Assignment</span>
-            </h2>
-            <div className="relative p-[2px] sm:p-[3px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_0_80px_rgba(168,85,247,0.15)]">
-                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
-                  className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#a855f7,#a855f7,transparent,transparent)] opacity-100" />
-                <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10">
-                    
-                    <div className="mb-10 p-6 bg-[#a855f7]/10 border border-[#a855f7]/30 rounded-[1.5rem]">
-                        <p className="text-[10px] md:text-xs text-white/60 uppercase tracking-widest font-bold leading-relaxed">
-                            <span className="text-[#a855f7]">PROTOCOL_BRIEF:</span> Link a Faculty Node to a specific Student Batch. This grants the faculty access to manage attendance and records for that class.
-                        </p>
-                    </div>
+        {activeTab === "NEURAL_LINK" && (
+          <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 text-left pb-20">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter">
+                Neural_Link <span className="text-[#a855f7]">Assignment</span>
+            </h2>
+            <div className="relative p-[2px] sm:p-[3px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_0_80px_rgba(168,85,247,0.15)]">
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#a855f7,#a855f7,transparent,transparent)] opacity-100" />
+                <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10">
+                    
+                    <div className="mb-10 p-6 bg-[#a855f7]/10 border border-[#a855f7]/30 rounded-[1.5rem]">
+                        <p className="text-[10px] md:text-xs text-white/60 uppercase tracking-widest font-bold leading-relaxed">
+                            <span className="text-[#a855f7]">PROTOCOL_BRIEF:</span> Link a Faculty Node to a specific Student Batch. This grants the faculty access to manage attendance and records for that class.
+                        </p>
+                    </div>
 
-                    <form onSubmit={handleEstablishLink} className="space-y-6 md:space-y-10">
-                        <div className="flex flex-col gap-3 md:gap-4">
-                            <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic">Target_Faculty_Node</label>
-                            <select 
-                                value={linkData.facultyId} 
-                                onChange={(e) => setLinkData({...linkData, facultyId: e.target.value})} 
-                                className="bg-[#0f172a] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none focus:border-[#a855f7] text-white text-sm md:text-base font-black cursor-pointer appearance-none uppercase"
-                            >
-                                <option value="">-- SELECT_FACULTY --</option>
-                                {facultyList.filter(f => f.isAdminApproved).map(f => (
-                                    <option key={f._id || f.id} value={f._id || f.id}>{f.facultyName || f.name}</option>
-                                ))}
-                            </select>
-                        </div>
+                    <form onSubmit={handleEstablishLink} className="space-y-6 md:space-y-10">
+                        <div className="flex flex-col gap-3 md:gap-4">
+                            <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic">Target_Faculty_Node</label>
+                            <select 
+                                value={linkData.facultyId} 
+                                onChange={(e) => setLinkData({...linkData, facultyId: e.target.value})} 
+                                className="bg-[#0f172a] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none focus:border-[#a855f7] text-white text-sm md:text-base font-black cursor-pointer appearance-none uppercase"
+                            >
+                                <option value="">-- SELECT_FACULTY --</option>
+                                {facultyList.filter(f => f.isAdminApproved).map(f => (
+                                    <option key={f._id || f.id} value={f._id || f.id}>{f.facultyName || f.name}</option>
+                                ))}
+                            </select>
+                        </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
-                            <BigSelect label="Course" options={["B.TECH", "BCA", "MCA", "B.PHARMA", "D.PHARMA", "MBA", "BBA"]} value={linkData.course} onChange={(e) => setLinkData({...linkData, course: e.target.value})} color="focus:border-[#a855f7]" />
-                            <BigSelect label="Semester" options={["1", "2", "3", "4", "5", "6", "7", "8"]} value={linkData.semester} onChange={(e) => setLinkData({...linkData, semester: e.target.value})} color="focus:border-[#a855f7]" />
-                            <BigSelect label="Section" options={["A", "B", "C"]} value={linkData.section} onChange={(e) => setLinkData({...linkData, section: e.target.value})} color="focus:border-[#a855f7]" />
-                        </div>
-                        
-                        <BigInput label="Subject_Code_Or_Name" placeholder="EX: CS-101 (DATA STRUCTURES)" value={linkData.subject} onChange={(e) => setLinkData({...linkData, subject: e.target.value})} color="focus:border-[#a855f7]" />
-                        
-                        <button type="submit" className="w-full py-6 md:py-8 bg-[#a855f7] text-black font-black uppercase tracking-[0.3em] md:tracking-[0.6em] text-xs md:text-sm rounded-full shadow-[0_20px_50px_rgba(168,85,247,0.4)] mt-4 hover:scale-[1.02] transition-transform">
-                            ESTABLISH_NEURAL_LINK
-                        </button>
-                    </form>
-                </div>
-            </div>
-          </div>
-        )}
-      </main>
-    </div>
-  );
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 md:gap-8">
+                            <BigSelect label="Course" options={["B.TECH", "BCA", "MCA", "B.PHARMA", "D.PHARMA", "MBA", "BBA"]} value={linkData.course} onChange={(e) => setLinkData({...linkData, course: e.target.value})} color="focus:border-[#a855f7]" />
+                            <BigSelect label="Semester" options={["1", "2", "3", "4", "5", "6", "7", "8"]} value={linkData.semester} onChange={(e) => setLinkData({...linkData, semester: e.target.value})} color="focus:border-[#a855f7]" />
+                            <BigSelect label="Section" options={["A", "B", "C"]} value={linkData.section} onChange={(e) => setLinkData({...linkData, section: e.target.value})} color="focus:border-[#a855f7]" />
+                        </div>
+                        
+                        <BigInput label="Subject_Code_Or_Name" placeholder="EX: CS-101 (DATA STRUCTURES)" value={linkData.subject} onChange={(e) => setLinkData({...linkData, subject: e.target.value})} color="focus:border-[#a855f7]" />
+                        
+                        <button type="submit" className="w-full py-6 md:py-8 bg-[#a855f7] text-black font-black uppercase tracking-[0.3em] md:tracking-[0.6em] text-xs md:text-sm rounded-full shadow-[0_20px_50px_rgba(168,85,247,0.4)] mt-4 hover:scale-[1.02] transition-transform">
+                            ESTABLISH_NEURAL_LINK
+                        </button>
+                    </form>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "STUDENTS" && (
+          <div className="max-w-4xl mx-auto space-y-8 md:space-y-12 text-left pb-20">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter">
+                {studentEditingId ? "Student_Revision" : "Student_Onboarding"}
+            </h2>
+            <div className="relative p-[2px] sm:p-[3px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_0_80px_rgba(34,211,238,0.15)]">
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#22d3ee,#22d3ee,transparent,transparent)] opacity-100" />
+                <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10">
+                    <form onSubmit={handleStudentRegister} className="space-y-6 md:space-y-10">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-10">
+                            <BigInput label="Legal_Name" placeholder="EX: TONY_PARKER" value={studentData.name} onChange={(e) => setStudentData({...studentData, name: e.target.value})} color="focus:border-[#22d3ee]" />
+                            <BigInput label="Registration_Number" placeholder="AC-01_FORMAT" value={studentData.rollNo} onChange={(e) => setStudentData({...studentData, rollNo: e.target.value})} color="focus:border-[#22d3ee]" />
+                        </div>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 md:gap-8">
+                            <BigInput label="Year" placeholder="EX: 1, 2026, etc." value={studentData.year} onChange={(e) => setStudentData({...studentData, year: e.target.value})} color="focus:border-[#22d3ee]" />
+                            <BigSelect label="Course" options={["B.TECH", "BCA", "MCA", "B.PHARMA", "D.PHARMA", "MBA", "BBA"]} value={studentData.course} onChange={(e) => setStudentData({...studentData, course: e.target.value})} color="focus:border-[#22d3ee]" />
+                            <BigSelect label="Section" options={["A", "B", "C"]} value={studentData.section} onChange={(e) => setStudentData({...studentData, section: e.target.value})} color="focus:border-[#22d3ee]" />
+                            <BigSelect label="Semester" options={["1", "2", "3", "4", "5", "6", "7", "8"]} value={studentData.semester} onChange={(e) => setStudentData({...studentData, semester: e.target.value})} color="focus:border-[#22d3ee]" />
+                        </div>
+                        <BigInput label="Email_Address" placeholder="TONY@STUDENT.ORG" value={studentData.email} onChange={(e) => setStudentData({...studentData, email: e.target.value})} color="focus:border-[#22d3ee]" />
+                        <button type="submit" className="w-full py-6 md:py-8 bg-[#22d3ee] text-black font-black uppercase tracking-[0.3em] md:tracking-[0.6em] text-xs md:text-sm rounded-full shadow-[0_20px_50px_rgba(34,211,238,0.4)] mt-4">
+                            {studentEditingId ? "COMMIT_CHANGES" : "AUTHORIZE_ENTITY"}
+                        </button>
+                    </form>
+                </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === "FACULTY" && (
+          <div className="max-w-2xl mx-auto space-y-8 md:space-y-12 text-left pb-20">
+            <h2 className="text-3xl sm:text-4xl md:text-5xl font-black italic text-white uppercase tracking-tighter">
+                {editingId ? "Node_Revision" : "Node_Provisioning"}
+            </h2>
+            <div className="relative p-[2px] sm:p-[3px] rounded-[2rem] md:rounded-[3.5rem] overflow-hidden shadow-[0_0_80px_rgba(0,255,65,0.15)]">
+                <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
+                  className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-100" />
+                <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10 text-center">
+                    
+                    <AnimatePresence>
+                        {generatedID ? (
+                            <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mb-10">
+                                <p className="text-[10px] text-[#00ff41] font-black uppercase tracking-widest mb-4">Provide this ID to the Faculty:</p>
+                                <div className="bg-[#00ff41]/10 border-2 border-[#00ff41]/50 p-8 rounded-3xl inline-block shadow-[0_0_40px_rgba(0,255,65,0.2)]">
+                                    <h1 className="text-5xl md:text-6xl font-black text-white italic tracking-tighter">{generatedID}</h1>
+                                </div>
+                                <button onClick={() => setGeneratedID(null)} className="block mx-auto mt-6 text-[10px] font-black text-white/50 hover:text-white uppercase tracking-widest transition-all">Generate_Another</button>
+                            </motion.div>
+                        ) : (
+                            <form onSubmit={generateFacultyCode} className="space-y-6 md:space-y-10 text-left">
+                                <p className="text-[10px] text-white/50 uppercase tracking-widest leading-relaxed text-center mb-8">
+                                    Enter the Legal Name. The system will auto-generate a Secure Auth ID. The faculty will use this ID to complete their Vault Setup.
+                                </p>
+                                <BigInput label="Legal_Name" placeholder="EX: DR. VICTOR_STARK" value={facultyData.facultyName} onChange={(e) => setFacultyData({...facultyData, facultyName: e.target.value})} />
+                                <button type="submit" className="w-full py-6 md:py-8 bg-[#00ff41] text-black font-black uppercase tracking-[0.3em] md:tracking-[0.6em] text-xs md:text-sm rounded-full shadow-[0_20px_50px_rgba(0,255,65,0.4)] mt-4 hover:scale-[1.02] transition-transform">
+                                    GENERATE_SECURE_ID
+                                </button>
+                            </form>
+                        )}
+                    </AnimatePresence>
+
+                </div>
+            </div>
+          </div>
+        )}
+      </main>
+    </div>
+  );
 };
 
 const BigInput = ({ label, placeholder, value, onChange, color = "focus:border-[#00ff41]" }) => (
-    <div className="flex flex-col gap-3 md:gap-4 group">
-      <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic transition-colors">{label}</label>
-      <input type="text" placeholder={placeholder} value={value !== undefined && value !== null ? value : ''} onChange={onChange}
-             className={`w-full bg-white/[0.03] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none ${color} transition-all text-white text-sm md:text-base font-black uppercase tracking-widest`} />
-    </div>
+    <div className="flex flex-col gap-3 md:gap-4 group">
+      <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic transition-colors">{label}</label>
+      <input type="text" placeholder={placeholder} value={value !== undefined && value !== null ? value : ''} onChange={onChange}
+             className={`w-full bg-white/[0.03] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none ${color} transition-all text-white text-sm md:text-base font-black uppercase tracking-widest`} />
+    </div>
 );
 
 const BigSelect = ({ label, options, value, onChange, color = "focus:border-[#00ff41]" }) => (
-    <div className="flex flex-col gap-3 md:gap-4">
-        <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic">{label}</label>
-        <select value={value} onChange={onChange} className={`bg-[#0f172a] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none ${color} text-white text-sm md:text-base font-black cursor-pointer appearance-none uppercase`}>
-            {options.map(o => <option key={o} value={o}>{o}</option>)}
-        </select>
-    </div>
+    <div className="flex flex-col gap-3 md:gap-4">
+        <label className="text-[10px] md:text-xs font-black text-white/30 ml-2 md:ml-4 tracking-[0.2em] md:tracking-[0.3em] uppercase italic">{label}</label>
+        <select value={value} onChange={onChange} className={`bg-[#0f172a] border-2 border-white/10 p-4 md:p-6 rounded-2xl md:rounded-3xl outline-none ${color} text-white text-sm md:text-base font-black cursor-pointer appearance-none uppercase`}>
+            {options.map(o => <option key={o} value={o}>{o}</option>)}
+        </select>
+    </div>
 );
 
 const RecordPill = ({ title, count, color, icon, isInteractive }) => (
-    <div className={`bg-black border-2 border-white/5 p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center shadow-2xl relative overflow-hidden transition-all ${isInteractive ? 'hover:scale-[1.02] active:scale-95' : ''}`}>
-        <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: color }} />
-        <span className="text-4xl md:text-5xl mb-4">{icon}</span>
-        <h3 className="text-base md:text-xl font-black text-white/40 tracking-[0.2em] md:tracking-[0.4em] mb-4 uppercase">{title}</h3>
-        <span className="text-6xl md:text-8xl font-black tracking-tighter italic" style={{ color }}>{count}</span>
-        {isInteractive && <span className="text-[8px] md:text-[10px] mt-4 font-black text-white/20 tracking-widest animate-pulse">TOUCH_TO_MANAGE</span>}
-    </div>
+    <div className={`bg-black border-2 border-white/5 p-8 md:p-10 rounded-[2rem] md:rounded-[3rem] flex flex-col items-center shadow-2xl relative overflow-hidden transition-all ${isInteractive ? 'hover:scale-[1.02] active:scale-95' : ''}`}>
+        <div className="absolute top-0 left-0 w-full h-1" style={{ backgroundColor: color }} />
+        <span className="text-4xl md:text-5xl mb-4">{icon}</span>
+        <h3 className="text-base md:text-xl font-black text-white/40 tracking-[0.2em] md:tracking-[0.4em] mb-4 uppercase">{title}</h3>
+        <span className="text-6xl md:text-8xl font-black tracking-tighter italic" style={{ color }}>{count}</span>
+        {isInteractive && <span className="text-[8px] md:text-[10px] mt-4 font-black text-white/20 tracking-widest animate-pulse">TOUCH_TO_MANAGE</span>}
+    </div>
 );
 
 const NavBtn = ({ label, active, onClick, color }) => (
-    <button onClick={onClick} className={`relative p-4 md:p-5 rounded-xl md:rounded-2xl flex items-center transition-all w-full md:w-auto ${active ? `text-[${color || '#00ff41'}]` : 'text-white/30'}`}>
-        {active && <motion.div layoutId="activeNav" className="absolute inset-0 bg-white/5 border-2 rounded-xl md:rounded-2xl" style={{ borderColor: color ? `${color}40` : '#00ff4140' }} />}
-        <span className="font-black text-[10px] md:text-xs tracking-widest relative z-10 uppercase" style={{ color: active ? (color || '#00ff41') : '' }}>{label}</span>
-    </button>
+    <button onClick={onClick} className={`relative p-4 md:p-5 rounded-xl md:rounded-2xl flex items-center transition-all w-full md:w-auto ${active ? `text-[${color || '#00ff41'}]` : 'text-white/30'}`}>
+        {active && <motion.div layoutId="activeNav" className="absolute inset-0 bg-white/5 border-2 rounded-xl md:rounded-2xl" style={{ borderColor: color ? `${color}40` : '#00ff4140' }} />}
+        <span className="font-black text-[10px] md:text-xs tracking-widest relative z-10 uppercase" style={{ color: active ? (color || '#00ff41') : '' }}>{label}</span>
+    </button>
 );
 
 export default AdminPanel;
