@@ -134,6 +134,7 @@ const AdminPanel = ({ onBack }) => {
               const rawEmail = findVal(['email', 'emailaddress', 'mailid', 'ema'], ['mail', 'ema']);
               const rawPhone = findVal(['phone', 'contact', 'mobile', 'ph'], ['phon', 'mob', 'cont', 'ph']);
               
+              // 🔥 YAHAN SE DEFAULT '1' HATA DIYA! EXACT EXCEL VALUE AAYEGI.
               const rawYear = findVal(['year', 'yr', 'yea', 'y'], ['year', 'yr', 'yea']);
 
               const idString = rawReg ? String(rawReg).trim() : null; 
@@ -142,7 +143,7 @@ const AdminPanel = ({ onBack }) => {
                   _tempId: Math.random().toString(36).substr(2, 9),
                   regNo: idString, 
                   name: rawName ? String(rawName).trim().toUpperCase() : null,
-                  year: rawYear ? String(rawYear).trim() : "", 
+                  year: rawYear ? String(rawYear).trim() : "", // 🔥 DIRECT FETCH NO DEFAULT
                   course: rawCourse ? String(rawCourse).trim().toUpperCase() : 'B.TECH', 
                   semester: rawSem ? String(rawSem).trim() : '1',
                   section: rawSec ? String(rawSec).trim().toUpperCase() : 'A',
@@ -291,22 +292,23 @@ const AdminPanel = ({ onBack }) => {
     }
   };
 
-  const approveFaculty = async (id) => {
-      try {
-          const response = await fetch(`${BACKEND_URL}/api/admin/approve-faculty`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ id })
-          });
-          const result = await response.json();
-          if (result.success) {
-              alert(`✅ ACCESS GRANTED: Faculty ID generated -> ${result.facultyID}`);
-              fetchData();
-          }
-      } catch (error) {
-          alert("❌ ERROR: Approval failed!");
-      }
-  };
+  // 🔥 ADDED: Approve function for new requests
+  const approveFaculty = async (id) => {
+      try {
+          const response = await fetch(`${BACKEND_URL}/api/admin/approve-faculty`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ id })
+          });
+          const result = await response.json();
+          if (result.success) {
+              alert(`✅ ACCESS GRANTED: Faculty ID generated -> ${result.facultyID}`);
+              fetchData();
+          }
+      } catch (error) {
+          alert("❌ ERROR: Approval failed!");
+      }
+  };
 
   const triggerEdit = (f) => {
     setEditingId(f.id);
@@ -441,7 +443,7 @@ const AdminPanel = ({ onBack }) => {
     const exportData = processedStudents.map(s => ({
         "RegNo": s.regNo || s.collegeId || s.rollNo || "N/A",
         "Name": s.name || "N/A",
-        "Year": s.year || "", 
+        "Year": s.year || "", // 🔥 NO DEFAULT '1' EXPORT EITHER
         "Course": s.course || "N/A",
         "Semester": s.semester || "N/A",
         "Section": s.section || "N/A",
