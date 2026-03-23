@@ -32,6 +32,12 @@ const FacultyDashboard = () => {
   // 🔥 NEW: Broadcast Message State
   const [broadcastMsg, setBroadcastMsg] = useState("");
 
+  // 🔥 NEW: Subject Vault Explorer States (The Drill-down Logic)
+  const [viewSubjectVault, setViewSubjectVault] = useState(false);
+  const [selectedVaultSubject, setSelectedVaultSubject] = useState(null);
+  const [selectedVaultCategory, setSelectedVaultCategory] = useState(null);
+  const [vaultFiles, setVaultFiles] = useState([]);
+
   // 🔥 NEW FIELDS (Strictly Updated for Create Register)
   const [selectedPeriod, setSelectedPeriod] = useState(1); // Internal default
   const [selectedDate, setSelectedDate] = useState(new Date().toISOString().split('T')[0]); 
@@ -72,6 +78,18 @@ const FacultyDashboard = () => {
       }
     } catch (error) { console.error("DB_FETCH_FAILED"); }
   };
+
+  // 🔥 NEW: Fetch Files for Subject Vault Explorer
+  const fetchVaultFiles = async () => {
+      try {
+          const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`);
+          if (response.data) {
+              setVaultFiles(response.data);
+          }
+      } catch (err) {
+          console.error("Vault fetch failed", err);
+      }
+  };
 
   // 🔥 NEURAL REFRESH: Live Ledger Polling (Works in background)
   const refreshLedgerData = async () => {
@@ -120,6 +138,7 @@ const FacultyDashboard = () => {
   const { isSyncing, syncNow } = useLiveSync(() => {
     fetchMyRegisters();
     fetchNeuralProfile();
+    fetchVaultFiles(); // 🔥 Sync files too
   }, 15000);
 
   // 🔥 [CRUD_OPS]: Delete Register Logic
@@ -188,7 +207,6 @@ const FacultyDashboard = () => {
             setShowVaultDetails(false); 
             setActiveTab('attendance'); 
             setShowQR(true); 
-            // 🔥 QR fixed to pass email for scanning
             setQrToken(JSON.stringify({
               email: currentFacultyEmail,
               subject: (reg._id.subjectName || reg.subject).toUpperCase()
@@ -213,10 +231,10 @@ const FacultyDashboard = () => {
   useEffect(() => {
     fetchLectures();
     fetchNeuralProfile();
-    fetchAllStudentsFromDB(); 
+    fetchAllStudentsFromDB();
+    fetchVaultFiles();
   }, [selectedSection]); 
 
-  // 🔥 AUTOMATIC HEARTBEAT: Har 5 sec mein ledger update karega
   useEffect(() => {
     let poll;
     if (activeTab === 'attendance' && sessionActive) {
@@ -248,13 +266,12 @@ const FacultyDashboard = () => {
         setSessionActive(true);
         setActiveTab('attendance');
         setShowQR(true);
-        // 🔥 QR Fixed
         setQrToken(JSON.stringify({
           email: currentFacultyEmail,
           subject: subjectName.toUpperCase()
         }));
         alert(`📅 [REGISTER_CREATED]: ${subjectName}`);
-        syncNow(); // Sync new register
+        syncNow(); 
       }
     } catch (error) { alert("System Error: Register Uplink Fail!"); }
   };
@@ -266,34 +283,32 @@ const FacultyDashboard = () => {
     setShowQR(false);
   };
 
-  // 🔥 NEW: Broadcast Handling
-  const handleBroadcastUpload = async () => {
-    if (!broadcastMsg) return alert("Bhai, message toh type kar!");
-    try {
-      const response = await axios.post(`${BACKEND_URL}/api/upload-note`, {
-        title: "Broadcast",
-        subject: "General",
-        facultyEmail: currentFacultyEmail,
-        category: "Broadcast",
-        message: broadcastMsg // Ensure backend saves this message field
-      });
-      if (response.data.success) {
-        alert(`🚀 SYNC_SUCCESS: Broadcast Alert Sent!`);
-        setShowModal(false);
-        setBroadcastMsg("");
-      }
-    } catch (error) { alert("System Error: Backend Uplink Fail!"); }
-  }
+  const handleBroadcastUpload = async () => {
+    if (!broadcastMsg) return alert("Bhai, message toh type kar!");
+    try {
+      const response = await axios.post(`${BACKEND_URL}/api/upload-note`, {
+        title: "Broadcast",
+        subject: "General",
+        facultyEmail: currentFacultyEmail,
+        category: "Broadcast",
+        message: broadcastMsg
+      });
+      if (response.data.success) {
+        alert(`🚀 SYNC_SUCCESS: Broadcast Alert Sent!`);
+        setShowModal(false);
+        setBroadcastMsg("");
+      }
+    } catch (error) { alert("System Error: Backend Uplink Fail!"); }
+  }
 
   const handleNoteUpload = async () => {
     if (!lectureForm.file) return alert("Bhai, pehle file toh select kar le!");
     const formData = new FormData();
     formData.append('file', lectureForm.file);
     formData.append('title', lectureForm.title || "Untitled_Packet");
-    // 🔥 Added subjectName manually if not set
     formData.append('subject', lectureForm.topic || subjectName || "General"); 
     formData.append('facultyEmail', currentFacultyEmail);
-    formData.append('category', modalType); // Sends if it's PYQ, Assignment etc.
+    formData.append('category', modalType); 
     try {
       const response = await axios.post(`${BACKEND_URL}/api/upload-note`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -302,9 +317,21 @@ const FacultyDashboard = () => {
         alert(`🚀 SYNC_SUCCESS: ${modalType} Uploaded!`);
         setShowModal(false);
         setLectureForm({ unit: '', date: '', topic: '', desc: '', time: '', file: null, title: '' });
+        fetchVaultFiles(); // Sync after upload
       }
     } catch (error) { alert("System Error: Backend Uplink Fail!"); }
   };
+
+  // 🔥 NEW: Smart Back Button Logic for the Drill-down UI
+  const handleVaultBack = () => {
+    if (selectedVaultCategory) {
+        setSelectedVaultCategory(null);
+    } else if (selectedVaultSubject) {
+        setSelectedVaultSubject(null);
+    } else {
+        setViewSubjectVault(false);
+    }
+  };
 
   const getDaysInMonth = (monthName) => {
     const year = new Date().getFullYear(); 
@@ -337,7 +364,6 @@ const FacultyDashboard = () => {
       interval = setInterval(() => {
         setTimeLeft((prev) => {
           if (prev <= 1) {
-            // Updated QR token rotation to include email for Student Scanner Fix
             const newToken = JSON.stringify({
               email: currentFacultyEmail,
               subject: subjectName.toUpperCase(),
@@ -371,7 +397,14 @@ const FacultyDashboard = () => {
     }
   };
 
-  const openUploadModal = (type) => { setModalType(type); setShowModal(true); };
+  const openUploadModal = (type) => { 
+    if (type === "Subject_Archives") {
+        setViewSubjectVault(true); // Open Explorer Instead of Form
+    } else {
+        setModalType(type); 
+        setShowModal(true); 
+    }
+  };
 
   const handleCreateLecture = async () => {
     try {
@@ -409,11 +442,14 @@ const FacultyDashboard = () => {
         </motion.div>
 
         <div className="flex items-center gap-4">
-          {activeTab === 'hub' && (
+          {activeTab === 'hub' && !viewSubjectVault && (
              <button onClick={syncNow} disabled={isSyncing} className={`text-[7px] md:text-[8px] font-black px-4 py-1.5 rounded-full border-2 transition-all ${isSyncing ? 'text-orange-500 border-orange-500/20' : 'text-[#00ff41] border-[#00ff41]/20 hover:bg-[#00ff41] hover:text-black hover:shadow-[0_0_15px_#00ff41]'}`}>SYNC_VAULT</button>
           )}
-          {(activeTab === 'attendance' || viewVault || showVaultDetails) && (
-            <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => {setActiveTab('hub'); setViewVault(false); setShowVaultDetails(false);}} className="text-[9px] font-black border-2 border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase"> &lt; HUB_RETURN </motion.button>
+          {(activeTab === 'attendance' || viewVault || showVaultDetails || viewSubjectVault) && (
+            <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => {
+                if (viewSubjectVault) { handleVaultBack(); }
+                else { setActiveTab('hub'); setViewVault(false); setShowVaultDetails(false); }
+            }} className="text-[9px] font-black border-2 border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase"> &lt; HUB_RETURN </motion.button>
           )}
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border-4 border-[#00ff41]/40 flex items-center justify-center bg-[#00ff41]/5 shadow-[0_0_15px_#00ff41]"> <span className="text-lg md:text-xl font-black italic text-[#00ff41]">Ω</span> </div>
         </div>
@@ -421,7 +457,7 @@ const FacultyDashboard = () => {
 
       <div className="mt-24 md:mt-32 max-w-7xl mx-auto w-full">
         <AnimatePresence mode="wait">
-          {activeTab === 'hub' && !viewVault && !showVaultDetails ? (
+          {activeTab === 'hub' && !viewVault && !showVaultDetails && !viewSubjectVault ? (
             <motion.div key="hub-view" initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -20 }} transition={{ duration: 0.4 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 md:gap-8">
               
               {/* --- ASSIGNED CLASSES (NEURAL LINK) --- */}
@@ -504,6 +540,7 @@ const FacultyDashboard = () => {
               <UploadCardHub title="Upload_Notes" type="📑" accentColor="#22d3ee" glow="shadow-cyan-500/15" onClick={() => openUploadModal("Archive_Notes")} />
               <UploadCardHub title="Upload_PYQ" type="📂" accentColor="#a78bfa" glow="shadow-purple-500/15" onClick={() => openUploadModal("PYQ_Archives")} />
               <UploadCardHub title="Assignments" type="📝" accentColor="#eab308" glow="shadow-yellow-500/15" onClick={() => openUploadModal("Assignments")} />
+              {/* 🔥 Subject Vault now opens the Explorer */}
               <UploadCardHub title="Subject_Vault" type="📖" accentColor="#f472b6" glow="shadow-pink-500/15" onClick={() => openUploadModal("Subject_Archives")} />
               <UploadCardHub title="Broadcast_Alert" type="📡" accentColor="#facc15" glow="shadow-yellow-400/15" onClick={() => openUploadModal("Broadcast")} />
             </motion.div>
@@ -529,7 +566,78 @@ const FacultyDashboard = () => {
                       </motion.div>
                   ))}
               </motion.div>
-          ) : activeTab === 'attendance' ? (
+          ) : viewSubjectVault ? (
+            // 🔥 THE NEW SUBJECT VAULT EXPLORER (Drill-down UI)
+            <motion.div key="explorer-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="w-full pb-40">
+                <div className="mb-8 border-l-4 border-[#f472b6] pl-6 text-left">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Vault_<span className="text-[#f472b6]">Explorer</span></h2>
+                    <p className="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 font-black">
+                        {selectedVaultSubject ? `Path: /Root/${selectedVaultSubject}${selectedVaultCategory ? `/${selectedVaultCategory}` : ''}` : 'Path: /Root/'}
+                    </p>
+                </div>
+
+                {!selectedVaultSubject ? (
+                    // STEP 1: Show Subjects
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {assignedNodes.length > 0 ? assignedNodes.map((node, idx) => (
+                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultSubject(node.subject)} className="bg-white/5 border-2 border-[#f472b6]/30 p-8 rounded-[2.5rem] cursor-pointer group hover:bg-[#f472b6]/10 transition-all flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(244,114,182,0.1)]">
+                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📁</span>
+                                <h3 className="text-xl font-black uppercase tracking-tighter text-white group-hover:text-[#f472b6]">{node.subject}</h3>
+                                <p className="text-[8px] opacity-40 uppercase tracking-widest mt-2">Open_Directory</p>
+                            </motion.div>
+                        )) : (
+                            <div className="col-span-full text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
+                                <span className="text-4xl mb-4 block">📭</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">No_Subjects_Assigned_Yet</p>
+                            </div>
+                        )}
+                    </div>
+                ) : !selectedVaultCategory ? (
+                    // STEP 2: Show Categories (Notes, Assign, PYQ) inside selected subject
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                            { name: "Archive_Notes", icon: "📑", color: "cyan-400" },
+                            { name: "Assignments", icon: "📝", color: "yellow-400" },
+                            { name: "PYQ_Archives", icon: "📂", color: "purple-400" }
+                        ].map((cat, idx) => (
+                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultCategory(cat.name)} className="bg-white/5 border-2 border-white/10 p-8 rounded-[2.5rem] cursor-pointer group hover:border-white/30 transition-all flex flex-col items-center justify-center text-center">
+                                <span className="text-6xl mb-6 group-hover:scale-110 transition-transform">{cat.icon}</span>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{cat.name.replace('_', ' ')}</h3>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    // STEP 3: Show actual files for Subject + Category
+                    <div className="space-y-4">
+                        {vaultFiles.filter(file => 
+                            file.faculty === currentFacultyEmail && 
+                            file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() &&
+                            file.category === selectedVaultCategory
+                        ).length > 0 ? (
+                            vaultFiles.filter(file => file.faculty === currentFacultyEmail && file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() && file.category === selectedVaultCategory).map((file, idx) => (
+                                <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors group">
+                                    <div className="flex items-center gap-4 text-left">
+                                        <span className="text-2xl opacity-60">📄</span>
+                                        <div>
+                                            <h4 className="text-sm font-black uppercase tracking-wider text-white">{file.title}</h4>
+                                            <p className="text-[9px] opacity-40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#f472b6] hover:text-black transition-colors">
+                                        Download
+                                    </a>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
+                                <span className="text-4xl mb-4 block">📭</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">Directory_Empty</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </motion.div>
+          ) : activeTab === 'attendance' ? (
             <motion.div key="attendance-view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4 }} className="w-full pb-48">
               <div className="flex flex-col lg:flex-row gap-10 mt-6">
                 
@@ -675,24 +783,22 @@ const FacultyDashboard = () => {
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
                 ) : modalType === "Broadcast" ? (
-                  // 🔥 Broadcast UI: Sirf Message Type karne ke liye (No File Upload)
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-2 text-left">
-                        <label className="text-[9px] font-black opacity-30 uppercase">Broadcast_Message</label>
-                        <textarea 
-                            rows="5" 
-                            placeholder="TYPE_YOUR_ALERT_HERE..." 
-                            value={broadcastMsg} 
-                            onChange={e => setBroadcastMsg(e.target.value)} 
-                            className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-yellow-400 text-white resize-none" 
-                        />
-                    </div>
-                    <button onClick={handleBroadcastUpload} className="w-full py-5 bg-yellow-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(250,204,21,0.3)] mt-6 hover:scale-[1.02] transition-transform">
-                        Transmit_Broadcast
-                    </button>
-                  </div>
-                ) : (
-                  // Document Upload UI (Notes, PYQs, Assignments)
+                  <div className="space-y-6">
+                    <div className="flex flex-col gap-2 text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase">Broadcast_Message</label>
+                        <textarea 
+                            rows="5" 
+                            placeholder="TYPE_YOUR_ALERT_HERE..." 
+                            value={broadcastMsg} 
+                            onChange={e => setBroadcastMsg(e.target.value)} 
+                            className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-yellow-400 text-white resize-none" 
+                        />
+                    </div>
+                    <button onClick={handleBroadcastUpload} className="w-full py-5 bg-yellow-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(250,204,21,0.3)] mt-6 hover:scale-[1.02] transition-transform">
+                        Transmit_Broadcast
+                    </button>
+                  </div>
+                ) : (
                   <div className="space-y-6">
                     <div className="flex flex-col gap-2 text-left">
                         <label className="text-[9px] font-black opacity-30 uppercase">Packet_Title</label>
