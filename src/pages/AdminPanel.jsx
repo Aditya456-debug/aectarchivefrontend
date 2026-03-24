@@ -4,7 +4,7 @@ import useLiveSync from '../hooks/useLiveSync';
 import * as XLSX from 'xlsx';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
-const AdminPanel = ({ onBack }) => {
+const AdminPanel = ({ onBack }) => { 
   // 🔥 AUTHENTICATION PROTOCOL
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [loginForm, setLoginForm] = useState({ email: '', pass: '' });
@@ -1015,7 +1015,7 @@ const AdminPanel = ({ onBack }) => {
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {facultyList.filter(f => f.isAdminApproved === false).map(f => (
-      0                         <div key={f._id || f.id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
+                                <div key={f._id || f.id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
                                       <div>
                                           <h4 className="text-lg font-black text-white italic uppercase tracking-tighter">{f.facultyName || f.name}</h4>
                                           <p className="text-[9px] text-white/50 tracking-widest mt-1">{f.emailID || f.email}</p>
