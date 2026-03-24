@@ -87,7 +87,7 @@ const AdminPanel = ({ onBack }) => {
   const handleExcelPreview = (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    setRawFile(file); // 🔥 Store original file for HandleExcelSync
+    setRawFile(file); // 🔥 Store original file for upload logic
 
     const reader = new FileReader();
     reader.onload = (evt) => {
@@ -182,6 +182,7 @@ const AdminPanel = ({ onBack }) => {
       }
     };
     reader.readAsArrayBuffer(file);
+    e.target.value = null; 
   };
 
   const handleEditStagingRow = (tempId, row) => {
@@ -236,7 +237,7 @@ const AdminPanel = ({ onBack }) => {
 
     const hasAnomalies = stagedData.some(r => !r.regNo || !r.name);
     if (hasAnomalies) {
-        return alert("❌ UPLINK BLOCKED: Please FIX or DROP the Red Flagged (Invalid) entries first!");
+        return alert("❌ UPLINK BLOCKED: Please FIX or DROP the Red Flagged entries first!");
     }
 
     if (!stagedData || stagedData.length === 0) return alert("❌ ERROR: NO_DATA_STAGED");
@@ -244,11 +245,7 @@ const AdminPanel = ({ onBack }) => {
     setIsSyncing(true);
     try {
       const formData = new FormData();
-      formData.append('file', rawFile); // 🔥 CRITICAL: Standard file upload key
-      
-      // Also send the stringified JSON data for validation if backend requires it
-      const cleanData = stagedData.map(({ _tempId, ...rest }) => rest);
-      formData.append('studentsJson', JSON.stringify(cleanData));
+      formData.append('file', rawFile); // 🔥 Using physical file for Multer
 
       const response = await axios.post(`${BACKEND_URL}/api/admin/bulk-upload`, formData, {
         headers: { 'Content-Type': 'multipart/form-data' }
@@ -264,7 +261,7 @@ const AdminPanel = ({ onBack }) => {
       }
     } catch (error) {
       console.error("Uplink Error:", error);
-      alert("❌ [SYSTEM]: UPLINK_CRITICAL_FAILURE (400 - Check file headers)");
+      alert("❌ [SYSTEM]: UPLINK_CRITICAL_FAILURE");
     } finally {
       setIsSyncing(false);
     }
@@ -915,7 +912,7 @@ const AdminPanel = ({ onBack }) => {
                         <button onClick={() => setIsStudentExpanded(false)} className="w-fit text-[10px] font-black border border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase tracking-widest bg-white/5">Back_To_Core</button>
                     </div>
                   </div>
-                   
+                  
                   <div className="bg-white/[0.02] border border-white/10 p-4 md:p-6 rounded-[1.5rem] flex flex-col lg:flex-row gap-4">
                       <div className="flex-1 relative">
                         <input 
@@ -1077,7 +1074,7 @@ const AdminPanel = ({ onBack }) => {
                 <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#a855f7,#a855f7,transparent,transparent)] opacity-100" />
                 <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10">
-                     
+                    
                     <div className="mb-10 p-6 bg-[#a855f7]/10 border border-[#a855f7]/30 rounded-[1.5rem]">
                         <p className="text-[10px] md:text-xs text-white/60 uppercase tracking-widest font-bold leading-relaxed">
                             <span className="text-[#a855f7]">PROTOCOL_BRIEF:</span> Link a Faculty Node to a specific Student Batch. This grants the faculty access to manage attendance and records for that class.
@@ -1104,9 +1101,9 @@ const AdminPanel = ({ onBack }) => {
                             <BigSelect label="Semester" options={["1", "2", "3", "4", "5", "6", "7", "8"]} value={linkData.semester} onChange={(e) => setLinkData({...linkData, semester: e.target.value})} color="focus:border-[#a855f7]" />
                             <BigSelect label="Section" options={["A", "B", "C"]} value={linkData.section} onChange={(e) => setLinkData({...linkData, section: e.target.value})} color="focus:border-[#a855f7]" />
                         </div>
-                         
+                        
                         <BigInput label="Subject_Code_Or_Name" placeholder="EX: CS-101 (DATA STRUCTURES)" value={linkData.subject} onChange={(e) => setLinkData({...linkData, subject: e.target.value})} color="focus:border-[#a855f7]" />
-                         
+                        
                         <button type="submit" className="w-full py-6 md:py-8 bg-[#a855f7] text-black font-black uppercase tracking-[0.3em] md:tracking-[0.6em] text-xs md:text-sm rounded-full shadow-[0_20px_50px_rgba(168,85,247,0.4)] mt-4 hover:scale-[1.02] transition-transform">
                             ESTABLISH_NEURAL_LINK
                         </button>
@@ -1155,7 +1152,7 @@ const AdminPanel = ({ onBack }) => {
                 <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 5, repeat: Infinity, ease: "linear" }}
                   className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-100" />
                 <div className="relative bg-[#020617]/95 backdrop-blur-3xl rounded-[1.9rem] md:rounded-[3.3rem] p-6 sm:p-10 md:p-16 border-2 border-white/10 text-center">
-                     
+                    
                     <AnimatePresence>
                         {generatedID ? (
                             <motion.div initial={{ scale: 0.8, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="mb-10">
