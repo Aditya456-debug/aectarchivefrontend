@@ -5,6 +5,10 @@ import * as XLSX from 'xlsx';
 import { PieChart, Pie, Cell, BarChart, Bar, XAxis, YAxis, Tooltip as RechartsTooltip, ResponsiveContainer } from 'recharts';
 
 const AdminPanel = ({ onBack }) => {
+  // 🔥 AUTHENTICATION PROTOCOL
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [loginForm, setLoginForm] = useState({ email: '', pass: '' });
+
   const [activeTab, setActiveTab] = useState("DASHBOARD");
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isFacultyExpanded, setIsFacultyExpanded] = useState(false);
@@ -47,6 +51,16 @@ const AdminPanel = ({ onBack }) => {
   const [inspectedStudent, setInspectedStudent] = useState(null);
 
   const BACKEND_URL = import.meta.env.VITE_BACKEND_URL;
+
+  // 🔥 MASTER LOGIN LOGIC
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (loginForm.email === "acetarchive@outlook.com" && loginForm.pass === "Acet@123") {
+      setIsAuthenticated(true);
+    } else {
+      alert("🛑 ACCESS_DENIED: INVALID_MASTER_CREDENTIALS");
+    }
+  };
 
   const courseStats = useMemo(() => {
       const counts = {};
@@ -261,7 +275,7 @@ const AdminPanel = ({ onBack }) => {
       setStudentList(sData);
     } catch (error) {
       console.error("Fetch Error:", error);
-  0}
+    }
   };
 
   const { isSyncing: autoSyncing, syncNow } = useLiveSync(fetchData, 10000);
@@ -291,7 +305,6 @@ const AdminPanel = ({ onBack }) => {
     }
   };
 
-  // 🔥 Function to Approve Pending Faculty Requests
   const approveFaculty = async (id) => {
       try {
           const response = await fetch(`${BACKEND_URL}/api/admin/approve-faculty`, {
@@ -331,7 +344,7 @@ const AdminPanel = ({ onBack }) => {
         } else {
           alert("❌ ERROR: TERMINATION_REJECTED");
         }
-    } catch (error) {
+      } catch (error) {
         alert("❌ [SYSTEM]: UPLINK_FAILURE_DURING_PURGE");
       }
     }
@@ -428,7 +441,7 @@ const AdminPanel = ({ onBack }) => {
           String(s.year) === filterYear || 
           (filterYear === "1" && ["1", "2"].includes(String(s.semester))) ||
           (filterYear === "2" && ["3", "4"].includes(String(s.semester))) ||
-         (filterYear === "3" && ["5", "6"].includes(String(s.semester))) ||
+          (filterYear === "3" && ["5", "6"].includes(String(s.semester))) ||
           (filterYear === "4" && ["7", "8"].includes(String(s.semester)));
     
     return searchMatch && courseMatch && semMatch && secMatch && yearMatch;
@@ -483,6 +496,34 @@ const AdminPanel = ({ onBack }) => {
     return null;
   };
 
+  // --- MASTER AUTHENTICATION PROTOCOL ---
+  if (!isAuthenticated) {
+    return (
+      <div className="fixed inset-0 z-[10005] bg-[#010409] flex items-center justify-center font-mono p-4">
+        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="w-full max-w-md bg-[#020617] border-2 border-[#00ff41]/20 p-10 rounded-[3.5rem] shadow-[0_0_100px_rgba(0,255,65,0.1)] relative overflow-hidden">
+          <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-[#00ff41] to-transparent" />
+          <div className="text-center mb-10">
+            <div className="w-16 h-16 bg-[#00ff41] rounded-2xl mx-auto flex items-center justify-center text-black font-black text-3xl mb-6 shadow-[0_0_30px_#00ff41]">A</div>
+            <h2 className="text-3xl font-black italic text-white uppercase tracking-tighter">Admin_<span className="text-[#00ff41]">Auth</span></h2>
+            <p className="text-[10px] text-white/30 uppercase tracking-[0.4em] mt-2">Neural_Archive_Control</p>
+          </div>
+          <form onSubmit={handleLogin} className="space-y-6">
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-white/40 uppercase ml-4">Master_Identity</label>
+              <input type="email" placeholder="ADMIN_EMAIL" required value={loginForm.email} onChange={(e)=>setLoginForm({...loginForm, email: e.target.value})} className="w-full bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] transition-all font-black text-xs" />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[9px] font-black text-white/40 uppercase ml-4">Encryption_Key</label>
+              <input type="password" placeholder="••••••••" required value={loginForm.pass} onChange={(e)=>setLoginForm({...loginForm, pass: e.target.value})} className="w-full bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] transition-all font-black text-xs" />
+            </div>
+            <button type="submit" className="w-full py-5 bg-[#00ff41] text-black font-black uppercase tracking-[0.4em] text-[11px] rounded-2xl hover:scale-[1.02] active:scale-95 transition-all shadow-[0_20px_40px_rgba(0,255,65,0.2)]">Initialize_Uplink</button>
+            <button type="button" onClick={onBack} className="w-full text-[9px] font-black text-white/20 hover:text-white transition-all uppercase tracking-widest"> &lt; TERMINATE_PROCESS </button>
+          </form>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
     <div className="fixed inset-0 z-[9999] flex flex-col md:flex-row bg-[#010409] text-white font-mono overflow-hidden selection:bg-[#00ff41]/30">
       
@@ -498,7 +539,7 @@ const AdminPanel = ({ onBack }) => {
             <motion.div 
               initial={{ scale: 0.9, y: 50, opacity: 0 }}
               animate={{ scale: 1, y: 0, opacity: 1 }}
-             exit={{ scale: 0.9, y: 50, opacity: 0 }}
+              exit={{ scale: 0.9, y: 50, opacity: 0 }}
               className="bg-[#020617] border-2 border-[#22d3ee]/30 w-full max-w-2xl rounded-[3rem] overflow-hidden shadow-[0_0_100px_rgba(34,211,238,0.2)] relative"
               onClick={(e) => e.stopPropagation()}
             >
@@ -673,7 +714,7 @@ const AdminPanel = ({ onBack }) => {
                         </div>
                         <p className="text-[10px] text-white/40 mb-6 uppercase tracking-widest leading-relaxed">Mass node manipulation & temporal phase shifting.</p>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-2 gap-4">
                         <button onClick={() => alert("PROMOTE_PROTOCOL_INITIATED")} className="py-4 border border-cyan-400/30 text-cyan-400 font-black text-[9px] rounded-xl hover:bg-cyan-400/10 tracking-tighter uppercase">Promote_Batch</button>
                         <button onClick={() => alert("ARCHIVE_PROTOCOL_INITIATED")} className="py-4 border border-red-500/30 text-red-500 font-black text-[9px] rounded-xl hover:bg-red-500/10 tracking-tighter uppercase">Archive_Alumni</button>
                       </div>
@@ -718,7 +759,7 @@ const AdminPanel = ({ onBack }) => {
 
                           <div className="bg-white/[0.02] border-2 border-white/5 p-6 rounded-[2.5rem] flex flex-col items-center">
                               <h3 className="text-xs font-black italic text-white/50 uppercase tracking-[0.3em] w-full text-left mb-6">Phase_Density_By_Semester</h3>
-                              <div className="w-full h-64">
+                             <div className="w-full h-64">
                                   <ResponsiveContainer width="100%" height="100%">
                                       <BarChart data={semStats} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                                           <XAxis dataKey="name" stroke="#ffffff33" tick={{ fill: '#ffffff66', fontSize: 10, fontFamily: 'monospace' }} />
@@ -802,7 +843,7 @@ const AdminPanel = ({ onBack }) => {
                                        {isEditing ? (
                                            <>
                                                <td className="p-2"><input type="text" placeholder="ID" value={stagingEditForm.regNo || ''} onChange={(e) => setStagingEditForm({...stagingEditForm, regNo: e.target.value})} className="w-full bg-black/50 border border-[#00ff41]/50 p-2 text-white outline-none focus:border-[#00ff41] rounded" /></td>
-                                              <td className="p-2"><input type="text" placeholder="NAME" value={stagingEditForm.name || ''} onChange={(e) => setStagingEditForm({...stagingEditForm, name: e.target.value})} className="w-full bg-black/50 border border-[#00ff41]/50 p-2 text-white outline-none focus:border-[#00ff41] rounded" /></td>
+                                               <td className="p-2"><input type="text" placeholder="NAME" value={stagingEditForm.name || ''} onChange={(e) => setStagingEditForm({...stagingEditForm, name: e.target.value})} className="w-full bg-black/50 border border-[#00ff41]/50 p-2 text-white outline-none focus:border-[#00ff41] rounded" /></td>
                                                <td className="p-2"><input type="text" placeholder="YR" value={stagingEditForm.year || ''} onChange={(e) => setStagingEditForm({...stagingEditForm, year: e.target.value})} className="w-full bg-black/50 border border-[#00ff41]/50 p-2 text-white outline-none focus:border-[#00ff41] rounded" /></td>
                                                <td className="p-2"><input type="text" value={stagingEditForm.course || ''} onChange={(e) => setStagingEditForm({...stagingEditForm, course: e.target.value})} className="w-full bg-black/50 border border-[#00ff41]/50 p-2 text-cyan-400 outline-none focus:border-[#00ff41] rounded" /></td>
                                                <td className="p-2 flex gap-1 items-center mt-2">
@@ -829,7 +870,7 @@ const AdminPanel = ({ onBack }) => {
                                                     <p className="text-white/60 lowercase truncate text-[10px]">{row.email}</p>
                                                     <p className="text-white/40 text-[8px] mt-1">Ph: {row.phone}</p>
                                                </td>
-                                               <td className="p-4 text-right">
+                                              <td className="p-4 text-right">
                                                    <div className="flex justify-end gap-3 opacity-30 hover:opacity-100 transition-opacity">
                                                        <button onClick={() => handleEditStagingRow(row._tempId, row)} className="text-[#00ff41] hover:underline tracking-widest text-[9px]">EDIT</button>
                                                        <button onClick={() => handleDeleteStagingRow(row._tempId)} className="text-red-500 hover:underline tracking-widest text-[9px]">DROP</button>
@@ -940,14 +981,14 @@ const AdminPanel = ({ onBack }) => {
                 </motion.div>
               ) : selectedFacultyResources ? (
                 <motion.div key="resource-vault" initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="space-y-8 md:space-y-10">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-[#00ff41] pl-4 md:pl-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-l-4 border-[#00ff41] pl-4 md:pl-6">
                         <div>
                             <h3 className="text-xl md:text-2xl font-black italic text-[#00ff41] uppercase tracking-widest truncate">{selectedFacultyResources.name || selectedFacultyResources.facultyName}_VAULT</h3>
                             <p className="text-[9px] md:text-[10px] text-white/40 mt-1 uppercase">Viewing: Faculty_Lecture_Packets</p>
                         </div>
                         <button onClick={() => setSelectedFacultyResources(null)} className="w-fit text-[10px] font-black border border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase tracking-widest bg-white/5">Back_To_Nodes</button>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         {(selectedFacultyResources.lectures || []).map((lec) => (
                            <div key={lec.id} className="bg-white/5 border border-white/10 p-5 md:p-6 rounded-2xl flex justify-between items-center group">
                                 <div>
@@ -966,7 +1007,7 @@ const AdminPanel = ({ onBack }) => {
                     <button onClick={() => setIsFacultyExpanded(false)} className="w-fit text-[10px] font-black border border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase tracking-widest bg-white/5">Back_To_Core</button>
                   </div>
 
-                  {/* 🔥 NEW: PENDING APPROVALS SECTION - CRASH PROOFED */}
+                  {/* 🔥 NEW: PENDING APPROVALS SECTION - CRASH PROOF NOW */}
                   {facultyList.filter(f => f.isAdminApproved === false).length > 0 && (
                       <div className="mb-8">
                           <h4 className="text-[10px] font-black text-orange-500 tracking-[0.3em] uppercase mb-4 pl-2 flex items-center gap-2">
@@ -974,7 +1015,7 @@ const AdminPanel = ({ onBack }) => {
                           </h4>
                           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                               {facultyList.filter(f => f.isAdminApproved === false).map(f => (
-                                  <div key={f._id || f.id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
+      0                         <div key={f._id || f.id} className="bg-orange-500/5 border border-orange-500/30 p-5 rounded-2xl flex flex-col justify-between">
                                       <div>
                                           <h4 className="text-lg font-black text-white italic uppercase tracking-tighter">{f.facultyName || f.name}</h4>
                                           <p className="text-[9px] text-white/50 tracking-widest mt-1">{f.emailID || f.email}</p>
@@ -1008,12 +1049,12 @@ const AdminPanel = ({ onBack }) => {
                         <span className="text-[10px] font-black bg-[#00ff41] text-black px-3 py-1 rounded uppercase">{f.facultyID || "VERIFIED"}</span>
                         <h4 className="text-xl md:text-2xl font-black text-white italic uppercase mt-6 tracking-tighter leading-none">{f.facultyName || f.name}</h4>
                         <p className="text-[11px] text-[#00ff41]/60 font-bold mt-2 lowercase truncate">{f.emailID || f.email}</p>
-                        <div className="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-[10px] md:text-xs font-black text-white/40 uppercase italic">
+                       <div className="pt-6 mt-6 border-t border-white/5 flex justify-between items-center text-[10px] md:text-xs font-black text-white/40 uppercase italic">
                            <span>{f.courses && Array.isArray(f.courses) && f.courses.length > 0 ? f.courses.join(", ") : "PENDING_SETUP"}</span>
                            <span className="text-[9px] font-black text-[#00ff41] animate-pulse">VAULT</span>
                         </div>
-                      </div>
-                    ))}
+                    </div>
+                  )));
                   </div>
                 </motion.div>
               )}

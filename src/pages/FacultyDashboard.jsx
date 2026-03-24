@@ -29,14 +29,14 @@ const FacultyDashboard = () => {
   // 🔥 NEW: Attendance Session State
   const [sessionActive, setSessionActive] = useState(false);
 
-  // 🔥 NEW: Broadcast Message State
-  const [broadcastMsg, setBroadcastMsg] = useState("");
+  // 🔥 NEW: Broadcast Message State
+  const [broadcastMsg, setBroadcastMsg] = useState("");
 
-  // 🔥 NEW: Subject Vault Explorer States (The Drill-down Logic)
-  const [viewSubjectVault, setViewSubjectVault] = useState(false);
-  const [selectedVaultSubject, setSelectedVaultSubject] = useState(null);
-  const [selectedVaultCategory, setSelectedVaultCategory] = useState(null);
-  const [vaultFiles, setVaultFiles] = useState([]);
+  // 🔥 NEW: Subject Vault Explorer States (The Drill-down Logic)
+  const [viewSubjectVault, setViewSubjectVault] = useState(false);
+  const [selectedVaultSubject, setSelectedVaultSubject] = useState(null);
+  const [selectedVaultCategory, setSelectedVaultCategory] = useState(null);
+  const [vaultFiles, setVaultFiles] = useState([]);
 
   // 🔥 NEW FIELDS (Strictly Updated for Create Register)
   const [selectedPeriod, setSelectedPeriod] = useState(1); // Internal default
@@ -79,17 +79,17 @@ const FacultyDashboard = () => {
     } catch (error) { console.error("DB_FETCH_FAILED"); }
   };
 
-  // 🔥 NEW: Fetch Files for Subject Vault Explorer
-  const fetchVaultFiles = async () => {
-      try {
-          const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`);
-          if (response.data) {
-              setVaultFiles(response.data);
-          }
-      } catch (err) {
-          console.error("Vault fetch failed", err);
-      }
-  };
+  // 🔥 NEW: Fetch Files for Subject Vault Explorer
+  const fetchVaultFiles = async () => {
+      try {
+          const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`);
+          if (response.data) {
+              setVaultFiles(response.data);
+          }
+      } catch (err) {
+          console.error("Vault fetch failed", err);
+      }
+  };
 
   // 🔥 NEURAL REFRESH: Live Ledger Polling (Works in background)
   const refreshLedgerData = async () => {
@@ -138,7 +138,7 @@ const FacultyDashboard = () => {
   const { isSyncing, syncNow } = useLiveSync(() => {
     fetchMyRegisters();
     fetchNeuralProfile();
-    fetchVaultFiles(); // 🔥 Sync files too
+    fetchVaultFiles(); // 🔥 Sync files too
   }, 15000);
 
   // 🔥 [CRUD_OPS]: Delete Register Logic
@@ -178,28 +178,28 @@ const FacultyDashboard = () => {
 
   // 🔥 [FIXED_UPLINK]: Fast Track Attendance Logic with QR Trigger
   const handleDirectAttendance = async (reg) => {
-    setSubjectName(reg._id.subjectName || reg.subject);
-    setCourseName(reg._id.course || reg.course);
-    setClassType(reg._id.classType || "Theory");
-    setSelectedSem(reg._id.semester || reg.semester);
-    setSelectedSection(reg._id.section || reg.section);
-    setAcademicSession(reg._id.sessionYear || academicSession);
+    setSubjectName(reg._id?.subjectName || reg.subject);
+    setCourseName(reg._id?.course || reg.course);
+    setClassType(reg._id?.classType || "Theory");
+    setSelectedSem(reg._id?.semester || reg.semester);
+    setSelectedSection(reg._id?.section || reg.section);
+    setAcademicSession(reg._id?.sessionYear || academicSession);
 
     try {
         const formattedDate = selectedDate.split('-').reverse().join('/');
         const response = await axios.post(`${BACKEND_URL}/api/attendance/start-session`, {
             facultyEmail: currentFacultyEmail,
             facultyName: facultyName, 
-            subjectName: (reg._id.subjectName || reg.subject).toUpperCase(),
-            course: (reg._id.course || reg.course).toUpperCase(),
-            semester: reg._id.semester || reg.semester,
-            year: reg._id.year || reg.year || "1",
-            section: reg._id.section || reg.section,
+            subjectName: (reg._id?.subjectName || reg.subject).toUpperCase(),
+            course: (reg._id?.course || reg.course).toUpperCase(),
+            semester: reg._id?.semester || reg.semester,
+            year: reg._id?.year || reg.year || "1",
+            section: reg._id?.section || reg.section,
             period: selectedPeriod,
             selectedDate: formattedDate,
-            month: reg._id.month || selectedMonth,
-            classType: reg._id.classType || "Theory",
-            sessionYear: reg._id.sessionYear || academicSession
+            month: reg._id?.month || selectedMonth,
+            classType: reg._id?.classType || "Theory",
+            sessionYear: reg._id?.sessionYear || academicSession
         });
 
         if (response.data.success) {
@@ -209,7 +209,7 @@ const FacultyDashboard = () => {
             setShowQR(true); 
             setQrToken(JSON.stringify({
               email: currentFacultyEmail,
-              subject: (reg._id.subjectName || reg.subject).toUpperCase()
+              subject: (reg._id?.subjectName || reg.subject).toUpperCase()
             }));
         }
     } catch (error) {
@@ -232,7 +232,7 @@ const FacultyDashboard = () => {
     fetchLectures();
     fetchNeuralProfile();
     fetchAllStudentsFromDB();
-    fetchVaultFiles();
+    fetchVaultFiles();
   }, [selectedSection]); 
 
   useEffect(() => {
@@ -244,7 +244,7 @@ const FacultyDashboard = () => {
   }, [activeTab, sessionActive, subjectName]);
 
   const handleStartAttendance = async () => {
-    if (!subjectName) return alert("Bhai, pehle Subject ka naam toh likh lo!");
+    if (!subjectName) return alert("Bhai, pehle Subject select toh kar lo!");
     try {
       const formattedDate = selectedDate.split('-').reverse().join('/');
       const response = await axios.post(`${BACKEND_URL}/api/attendance/start-session`, {
@@ -271,6 +271,7 @@ const FacultyDashboard = () => {
           subject: subjectName.toUpperCase()
         }));
         alert(`📅 [REGISTER_CREATED]: ${subjectName}`);
+        setShowModal(false);
         syncNow(); 
       }
     } catch (error) { alert("System Error: Register Uplink Fail!"); }
@@ -317,21 +318,21 @@ const FacultyDashboard = () => {
         alert(`🚀 SYNC_SUCCESS: ${modalType} Uploaded!`);
         setShowModal(false);
         setLectureForm({ unit: '', date: '', topic: '', desc: '', time: '', file: null, title: '' });
-        fetchVaultFiles(); // Sync after upload
+        fetchVaultFiles(); // Sync after upload
       }
     } catch (error) { alert("System Error: Backend Uplink Fail!"); }
   };
 
-  // 🔥 NEW: Smart Back Button Logic for the Drill-down UI
-  const handleVaultBack = () => {
-    if (selectedVaultCategory) {
-        setSelectedVaultCategory(null);
-    } else if (selectedVaultSubject) {
-        setSelectedVaultSubject(null);
-    } else {
-        setViewSubjectVault(false);
-    }
-  };
+  // 🔥 NEW: Smart Back Button Logic for the Drill-down UI
+  const handleVaultBack = () => {
+    if (selectedVaultCategory) {
+        setSelectedVaultCategory(null);
+    } else if (selectedVaultSubject) {
+        setSelectedVaultSubject(null);
+    } else {
+        setViewSubjectVault(false);
+    }
+  };
 
   const getDaysInMonth = (monthName) => {
     const year = new Date().getFullYear(); 
@@ -398,13 +399,13 @@ const FacultyDashboard = () => {
   };
 
   const openUploadModal = (type) => { 
-    if (type === "Subject_Archives") {
-        setViewSubjectVault(true); // Open Explorer Instead of Form
-    } else {
-        setModalType(type); 
-        setShowModal(true); 
-    }
-  };
+    if (type === "Subject_Archives") {
+        setViewSubjectVault(true); // Open Explorer Instead of Form
+    } else {
+        setModalType(type); 
+        setShowModal(true); 
+    }
+  };
 
   const handleCreateLecture = async () => {
     try {
@@ -447,9 +448,9 @@ const FacultyDashboard = () => {
           )}
           {(activeTab === 'attendance' || viewVault || showVaultDetails || viewSubjectVault) && (
             <motion.button initial={{ opacity: 0 }} animate={{ opacity: 1 }} onClick={() => {
-                if (viewSubjectVault) { handleVaultBack(); }
-                else { setActiveTab('hub'); setViewVault(false); setShowVaultDetails(false); }
-            }} className="text-[9px] font-black border-2 border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase"> &lt; HUB_RETURN </motion.button>
+                if (viewSubjectVault) { handleVaultBack(); }
+                else { setActiveTab('hub'); setViewVault(false); setShowVaultDetails(false); }
+            }} className="text-[9px] font-black border-2 border-white/20 px-6 py-2 rounded-full hover:bg-white hover:text-black transition-all uppercase"> &lt; HUB_RETURN </motion.button>
           )}
           <div className="w-10 h-10 md:w-12 md:h-12 rounded-xl border-4 border-[#00ff41]/40 flex items-center justify-center bg-[#00ff41]/5 shadow-[0_0_15px_#00ff41]"> <span className="text-lg md:text-xl font-black italic text-[#00ff41]">Ω</span> </div>
         </div>
@@ -478,69 +479,14 @@ const FacultyDashboard = () => {
                   </div>
               )}
 
-              {/* --- CREATE REGISTER CARD --- */}
-              <div className="md:col-span-2 lg:col-span-4 relative p-[4px] rounded-[2.5rem] md:rounded-[3.5rem] overflow-hidden group shadow-[0_0_60px_rgba(0,255,65,0.15)] bg-white/5 border border-white/10">
-                <div className="relative bg-[#020617] rounded-[2.3rem] md:rounded-[3.3rem] p-10 md:p-14 overflow-hidden h-full flex flex-col lg:flex-row gap-10">
-                  <div className="relative z-10 flex flex-col items-start text-left flex-1 space-y-8">
-                    <div className="border-l-4 border-[#00ff41] pl-6">
-                      <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Create_<span className="text-[#00ff41]">Register</span></h2>
-                      <p className="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 font-black">Manual_System_Initialization_v4.2</p>
-                    </div>
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                        <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Faculty_Name</label>
-                            <input type="text" value={facultyName} onChange={(e) => setFacultyName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Subject_Name</label>
-                          <input type="text" placeholder="EX: OS / CN" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
-                        </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[9px] font-black text-white/40 uppercase">Month</label>
-                          <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                             {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black text-white">{m}</option>))}
-                          </select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[9px] font-black text-white/40 uppercase">Course</label>
-                          <select value={courseName} onChange={(e) => setCourseName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                             <option value="B.TECH" className="bg-black">B.TECH</option> <option value="BBA" className="bg-black">BBA</option> <option value="MBA" className="bg-black">MBA</option> <option value="BCA" className="bg-black">BCA</option> <option value="MCA" className="bg-black">MCA</option> <option value="B.PHARMA" className="bg-black">B.PHARMA</option> <option value="D.PHARMA" className="bg-black">D.PHARMA</option>
-                          </select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[9px] font-black text-white/40 uppercase">Semester</label>
-                          <select value={selectedSem} onChange={(e) => setSelectedSem(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                             {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s} className="bg-black">Sem {s}</option>)}
-                          </select>
-                        </div>
-                        <div className="flex flex-col gap-2">
-                          <label className="text-[9px] font-black text-white/40 uppercase">Section</label>
-                          <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
-                        </div>
-                    </div>
-                  </div>
-
-                  <div className="flex items-center justify-center lg:border-l lg:border-white/5 lg:pl-10">
-                    <button onClick={handleStartAttendance} className="group relative p-16 rounded-full border-4 border-[#00ff41] hover:bg-[#00ff41] transition-all duration-500 shadow-[0_0_50px_rgba(0,255,65,0.2)]">
-                      <span className="text-5xl group-hover:scale-110 transition-transform block">🔓</span>
-                      <span className="absolute -bottom-10 left-1/2 -translate-x-1/2 text-[10px] font-black uppercase tracking-[0.4em] whitespace-nowrap text-[#00ff41]">Establish_Vault</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* --- ACTION CARDS --- */}
+              {/* --- HUB ACTION CARDS --- */}
+              <UploadCardHub title="Create_Register" type="🔓" accentColor="#00ff41" glow="shadow-[#00ff41]/15" onClick={() => openUploadModal("Create_Register")} />
               <UploadCardHub title="Create_A_Lecture" type="👨‍🏫" accentColor="#f87171" glow="shadow-red-500/15" onClick={() => openUploadModal("Lecture")} />
               <UploadCardHub title="Lecture_Vault" type="🔐" accentColor="#00ff41" glow="shadow-[#00ff41]/15" onClick={() => setViewVault(true)} />
               <UploadCardHub title="Subject_Attendance" type="📊" accentColor="#3b82f6" glow="shadow-blue-500/15" onClick={() => setShowVaultDetails(true)} />
               <UploadCardHub title="Upload_Notes" type="📑" accentColor="#22d3ee" glow="shadow-cyan-500/15" onClick={() => openUploadModal("Archive_Notes")} />
               <UploadCardHub title="Upload_PYQ" type="📂" accentColor="#a78bfa" glow="shadow-purple-500/15" onClick={() => openUploadModal("PYQ_Archives")} />
               <UploadCardHub title="Assignments" type="📝" accentColor="#eab308" glow="shadow-yellow-500/15" onClick={() => openUploadModal("Assignments")} />
-              {/* 🔥 Subject Vault now opens the Explorer */}
               <UploadCardHub title="Subject_Vault" type="📖" accentColor="#f472b6" glow="shadow-pink-500/15" onClick={() => openUploadModal("Subject_Archives")} />
               <UploadCardHub title="Broadcast_Alert" type="📡" accentColor="#facc15" glow="shadow-yellow-400/15" onClick={() => openUploadModal("Broadcast")} />
             </motion.div>
@@ -567,77 +513,77 @@ const FacultyDashboard = () => {
                   ))}
               </motion.div>
           ) : viewSubjectVault ? (
-            // 🔥 THE NEW SUBJECT VAULT EXPLORER (Drill-down UI)
-            <motion.div key="explorer-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="w-full pb-40">
-                <div className="mb-8 border-l-4 border-[#f472b6] pl-6 text-left">
-                    <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Vault_<span className="text-[#f472b6]">Explorer</span></h2>
-                    <p className="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 font-black">
-                        {selectedVaultSubject ? `Path: /Root/${selectedVaultSubject}${selectedVaultCategory ? `/${selectedVaultCategory}` : ''}` : 'Path: /Root/'}
-                    </p>
-                </div>
+            // 🔥 THE NEW SUBJECT VAULT EXPLORER (Drill-down UI)
+            <motion.div key="explorer-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="w-full pb-40">
+                <div className="mb-8 border-l-4 border-[#f472b6] pl-6 text-left">
+                    <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Vault_<span className="text-[#f472b6]">Explorer</span></h2>
+                    <p className="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 font-black">
+                        {selectedVaultSubject ? `Path: /Root/${selectedVaultSubject}${selectedVaultCategory ? `/${selectedVaultCategory}` : ''}` : 'Path: /Root/'}
+                    </p>
+                </div>
 
-                {!selectedVaultSubject ? (
-                    // STEP 1: Show Subjects
-                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-                        {assignedNodes.length > 0 ? assignedNodes.map((node, idx) => (
-                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultSubject(node.subject)} className="bg-white/5 border-2 border-[#f472b6]/30 p-8 rounded-[2.5rem] cursor-pointer group hover:bg-[#f472b6]/10 transition-all flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(244,114,182,0.1)]">
-                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📁</span>
-                                <h3 className="text-xl font-black uppercase tracking-tighter text-white group-hover:text-[#f472b6]">{node.subject}</h3>
-                                <p className="text-[8px] opacity-40 uppercase tracking-widest mt-2">Open_Directory</p>
-                            </motion.div>
-                        )) : (
-                            <div className="col-span-full text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
-                                <span className="text-4xl mb-4 block">📭</span>
-                                <p className="text-[10px] font-black uppercase tracking-widest">No_Subjects_Assigned_Yet</p>
-                            </div>
-                        )}
-                    </div>
-                ) : !selectedVaultCategory ? (
-                    // STEP 2: Show Categories (Notes, Assign, PYQ) inside selected subject
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        {[
-                            { name: "Archive_Notes", icon: "📑", color: "cyan-400" },
-                            { name: "Assignments", icon: "📝", color: "yellow-400" },
-                            { name: "PYQ_Archives", icon: "📂", color: "purple-400" }
-                        ].map((cat, idx) => (
-                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultCategory(cat.name)} className="bg-white/5 border-2 border-white/10 p-8 rounded-[2.5rem] cursor-pointer group hover:border-white/30 transition-all flex flex-col items-center justify-center text-center">
-                                <span className="text-6xl mb-6 group-hover:scale-110 transition-transform">{cat.icon}</span>
-                                <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{cat.name.replace('_', ' ')}</h3>
-                            </motion.div>
-                        ))}
-                    </div>
-                ) : (
-                    // STEP 3: Show actual files for Subject + Category
-                    <div className="space-y-4">
-                        {vaultFiles.filter(file => 
-                            file.faculty === currentFacultyEmail && 
-                            file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() &&
-                            file.category === selectedVaultCategory
-                        ).length > 0 ? (
-                            vaultFiles.filter(file => file.faculty === currentFacultyEmail && file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() && file.category === selectedVaultCategory).map((file, idx) => (
-                                <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors group">
-                                    <div className="flex items-center gap-4 text-left">
-                                        <span className="text-2xl opacity-60">📄</span>
-                                        <div>
-                                            <h4 className="text-sm font-black uppercase tracking-wider text-white">{file.title}</h4>
-                                            <p className="text-[9px] opacity-40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</p>
-                                        </div>
-                                    </div>
-                                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#f472b6] hover:text-black transition-colors">
-                                        Download
-                                    </a>
-                                </motion.div>
-                            ))
-                        ) : (
-                            <div className="text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
-                                <span className="text-4xl mb-4 block">📭</span>
-                                <p className="text-[10px] font-black uppercase tracking-widest">Directory_Empty</p>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </motion.div>
-          ) : activeTab === 'attendance' ? (
+                {!selectedVaultSubject ? (
+                    // STEP 1: Show Subjects
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                        {assignedNodes.length > 0 ? assignedNodes.map((node, idx) => (
+                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultSubject(node.subject)} className="bg-white/5 border-2 border-[#f472b6]/30 p-8 rounded-[2.5rem] cursor-pointer group hover:bg-[#f472b6]/10 transition-all flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(244,114,182,0.1)]">
+                                <span className="text-5xl mb-4 group-hover:scale-110 transition-transform">📁</span>
+                                <h3 className="text-xl font-black uppercase tracking-tighter text-white group-hover:text-[#f472b6]">{node.subject}</h3>
+                                <p className="text-[8px] opacity-40 uppercase tracking-widest mt-2">Open_Directory</p>
+                            </motion.div>
+                        )) : (
+                            <div className="col-span-full text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
+                                <span className="text-4xl mb-4 block">📭</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">No_Subjects_Assigned_Yet</p>
+                            </div>
+                        )}
+                    </div>
+                ) : !selectedVaultCategory ? (
+                    // STEP 2: Show Categories (Notes, Assign, PYQ) inside selected subject
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        {[
+                            { name: "Archive_Notes", icon: "📑", color: "cyan-400" },
+                            { name: "Assignments", icon: "📝", color: "yellow-400" },
+                            { name: "PYQ_Archives", icon: "📂", color: "purple-400" }
+                        ].map((cat, idx) => (
+                            <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultCategory(cat.name)} className="bg-white/5 border-2 border-white/10 p-8 rounded-[2.5rem] cursor-pointer group hover:border-white/30 transition-all flex flex-col items-center justify-center text-center">
+                                <span className="text-6xl mb-6 group-hover:scale-110 transition-transform">{cat.icon}</span>
+                                <h3 className="text-2xl font-black uppercase tracking-tighter text-white">{cat.name.replace('_', ' ')}</h3>
+                            </motion.div>
+                        ))}
+                    </div>
+                ) : (
+                    // STEP 3: Show actual files for Subject + Category
+                    <div className="space-y-4">
+                        {vaultFiles.filter(file => 
+                            file.faculty === currentFacultyEmail && 
+                            file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() &&
+                            file.category === selectedVaultCategory
+                        ).length > 0 ? (
+                            vaultFiles.filter(file => file.faculty === currentFacultyEmail && file.subject?.toUpperCase() === selectedVaultSubject?.toUpperCase() && file.category === selectedVaultCategory).map((file, idx) => (
+                                <motion.div key={idx} initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-between items-center p-6 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors group">
+                                    <div className="flex items-center gap-4 text-left">
+                                        <span className="text-2xl opacity-60">📄</span>
+                                        <div>
+                                            <h4 className="text-sm font-black uppercase tracking-wider text-white">{file.title}</h4>
+                                            <p className="text-[9px] opacity-40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</p>
+                                        </div>
+                                    </div>
+                                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#f472b6] hover:text-black transition-colors">
+                                        Download
+                                    </a>
+                                </motion.div>
+                            ))
+                        ) : (
+                            <div className="text-center p-20 border-2 border-dashed border-white/10 rounded-[2.5rem] opacity-50">
+                                <span className="text-4xl mb-4 block">📭</span>
+                                <p className="text-[10px] font-black uppercase tracking-widest">Directory_Empty</p>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </motion.div>
+          ) : activeTab === 'attendance' ? (
             <motion.div key="attendance-view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4 }} className="w-full pb-48">
               <div className="flex flex-col lg:flex-row gap-10 mt-6">
                 
@@ -645,7 +591,7 @@ const FacultyDashboard = () => {
                 <div className="lg:w-1/3 flex flex-col gap-8">
                   <div className="relative p-[4px] rounded-[3rem] overflow-hidden group shadow-[0_0_70px_rgba(0,255,65,0.2)]">
                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-50" />
-                     <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
+                     <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
                            <QRCodeSVG value={qrToken} size={220} />
@@ -656,15 +602,9 @@ const FacultyDashboard = () => {
                         </div>
                      </div>
                   </div>
-                  <div className="bg-white/5 border-2 border-white/10 p-8 rounded-[2.5rem] flex flex-col gap-4">
-                      <p className="text-[9px] font-black text-[#00ff41] uppercase tracking-[0.3em] italic">SESSION_METRICS</p>
-                      <div className="flex justify-between items-center"><span className="text-[10px] font-bold opacity-60 uppercase">Date</span><span className="text-[10px] font-black text-[#00ff41]">{selectedDate}</span></div>
-                      <div className="flex justify-between items-center border-t border-white/5 pt-2"><span className="text-[10px] font-bold opacity-60 uppercase">Handshake</span><span className="text-[10px] font-black text-[#00ff41]">ENCRYPTED</span></div>
-                      <div className="flex justify-between items-center border-t border-white/5 pt-2"><span className="text-[10px] font-bold opacity-60 uppercase">Vault_Status</span><span className="text-[10px] font-black text-[#00ff41]">LOCKED_ACTIVE</span></div>
-                  </div>
                 </div>
 
-                {/* --- MANUAL TABLE COLUMN (LARGER & RESPONSIVE) --- */}
+                {/* --- MANUAL TABLE COLUMN --- */}
                 <div className="lg:w-2/3">
                   <div className="rounded-[3rem] border-2 border-white/10 bg-white/[0.02] overflow-hidden backdrop-blur-xl h-full shadow-2xl">
                      <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
@@ -696,58 +636,6 @@ const FacultyDashboard = () => {
                   </div>
                 </div>
               </div>
-
-              {/* --- BOTTOM LEDGER SECTION (EXPANDED) --- */}
-              <div className="mt-16 w-full border-4 border-[#00ff41] rounded-[3.5rem] overflow-hidden bg-black/80 shadow-[0_0_50px_rgba(0,255,65,0.2)]">
-                  <div className="p-10 bg-[#00ff41]/10 border-b border-[#00ff41]/20 flex flex-col md:flex-row justify-between items-start md:items-center gap-8">
-                      <div className="border-l-4 border-[#00ff41] pl-6 text-left">
-                          <h3 className="text-3xl font-black text-white uppercase italic tracking-tighter">Live_Attendance_Ledger_<span className="text-[#00ff41]">v4.0</span></h3>
-                          <p className="text-[9px] opacity-40 uppercase font-black tracking-[0.5em] mt-1 text-[#00ff41] italic">Neural_Resonance_Sync_Protocol_Active</p>
-                      </div>
-                      <button onClick={exportToExcel} className="group px-12 py-5 bg-[#00ff41] text-black font-black text-[11px] rounded-full hover:scale-105 transition-transform shadow-[0_0_30px_rgba(0,255,65,0.5)] uppercase tracking-widest flex items-center gap-3">
-                        <span className="text-xl group-hover:rotate-12 transition-transform">📊</span> Generate_Excel_Vault
-                      </button>
-                  </div>
-                  <div className="overflow-x-auto no-scrollbar max-h-[800px]">
-                      <table className="w-full text-left font-mono border-collapse">
-                          <thead>
-                              <tr className="bg-[#00ff41]/10 text-[#00ff41] text-[10px] uppercase font-black tracking-widest border-b border-[#00ff41]/20">
-                                  <th className="p-8 border-r border-[#00ff41]/10 min-w-[200px] sticky left-0 bg-[#020617] z-10">Identity_Handshake</th>
-                                  {[...Array(getDaysInMonth(selectedMonth))].map((_, i) => (
-                                      <th key={i} className={`p-4 text-center border-r border-[#00ff41]/10 min-w-[60px] ${parseInt(selectedDate.split('-')[2]) === (i+1) ? 'bg-[#00ff41] text-black' : ''}`}> {i + 1} </th>
-                                  ))}
-                              </tr>
-                          </thead>
-                          <tbody className="divide-y divide-[#00ff41]/10">
-                              {attendance.map((s, i) => (
-                                  <tr key={i} className="hover:bg-[#00ff41]/5 transition-colors group">
-                                      <td className="p-8 border-r border-[#00ff41]/10 sticky left-0 bg-[#020617] z-10 group-hover:bg-[#00ff41]/10 transition-colors">
-                                          <div className="flex flex-col text-left">
-                                              <span className="text-white text-sm font-black uppercase italic tracking-tighter">{s.name}</span>
-                                              <span className="text-[#00ff41] text-[10px] font-black opacity-50 uppercase">Packet: {s.collegeId}</span>
-                                          </div>
-                                      </td>
-                                      {[...Array(getDaysInMonth(selectedMonth))].map((_, dayIdx) => {
-                                           const currentDay = parseInt(selectedDate.split('-')[2]);
-                                           const isToday = (dayIdx + 1) === currentDay;
-                                           return (
-                                               <td key={dayIdx} className={`p-4 text-center border-r border-[#00ff41]/10 font-black text-base ${isToday ? 'bg-[#00ff41]/5' : ''}`}>
-                                                   {isToday ? (
-                                                       <span className={s.isPresent ? 'text-[#00ff41] drop-shadow-[0_0_10px_#00ff41]' : 'text-red-500'}> {s.isPresent ? 'P' : 'A'} </span>
-                                                   ) : <span className="opacity-10">-</span>}
-                                               </td>
-                                           );
-                                      })}
-                                  </tr>
-                              ))}
-                          </tbody>
-                      </table>
-                  </div>
-              </div>
-
-              <footer className="fixed bottom-0 left-0 w-full p-8 bg-black/90 backdrop-blur-2xl border-t-2 border-white/5 flex justify-center z-[100]">
-                <button onClick={handleFinalizeBatch} className="w-full max-w-2xl py-6 bg-[#00ff41] text-black font-black uppercase tracking-[0.6em] text-[12px] rounded-full shadow-[0_0_50px_rgba(0,255,65,0.4)] hover:scale-[1.03] transition-transform active:scale-95">FINALIZE_BATCH_DATA_LOG</button>
-              </footer>
             </motion.div>
           ) : null}
         </AnimatePresence>
@@ -761,11 +649,56 @@ const FacultyDashboard = () => {
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
               
               <div className="flex flex-row justify-between items-center mb-12 w-full">
-                <div className="border-l-4 border-cyan-400 pl-6 text-left"><h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">Uplink_<span className="text-cyan-400">{modalType}</span></h3><p className="text-[8px] opacity-30 uppercase font-black tracking-[0.3em] mt-1">Authorized_Access_Only</p></div>
+                <div className="border-l-4 border-cyan-400 pl-6 text-left"><h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">Uplink_<span className="text-cyan-400">{modalType.replace('_', ' ')}</span></h3><p className="text-[8px] opacity-30 uppercase font-black tracking-[0.3em] mt-1">Authorized_Access_Only</p></div>
                 <button onClick={() => { setShowModal(false); setEditingRegister(null); }} className="w-12 h-12 md:w-16 md:h-16 rounded-2xl border-2 border-white/10 flex flex-shrink-0 items-center justify-center hover:bg-red-500/20 hover:border-red-500/50 transition-all text-2xl bg-black/50 text-white">✕</button>
               </div>
 
               <div className="space-y-8 text-left">
+                {modalType === "Create_Register" && (
+                   <div className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                          <div className="flex flex-col gap-2">
+                              <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Faculty_Name</label>
+                              <input type="text" value={facultyName} readOnly className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none text-white/40 font-black uppercase text-xs cursor-not-allowed" />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Select_Assigned_Subject</label>
+                            <select value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                                <option value="" className="bg-black">-- SELECT_SUBJECT --</option>
+                                {assignedNodes.map((node, idx) => (
+                                    <option key={idx} value={node.subject} className="bg-black">{node.subject} ({node.course})</option>
+                                ))}
+                            </select>
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Month</label>
+                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black text-white">{m}</option>))}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Course</label>
+                            <select value={courseName} onChange={(e) => setCourseName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               <option value="B.TECH" className="bg-black">B.TECH</option> <option value="BBA" className="bg-black">BBA</option> <option value="MBA" className="bg-black">MBA</option> <option value="BCA" className="bg-black">BCA</option> <option value="MCA" className="bg-black">MCA</option> <option value="B.PHARMA" className="bg-black">B.PHARMA</option> <option value="D.PHARMA" className="bg-black">D.PHARMA</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Semester</label>
+                            <select value={selectedSem} onChange={(e) => setSelectedSem(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s} className="bg-black">Sem {s}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Section</label>
+                            <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
+                          </div>
+                      </div>
+                      <button onClick={handleStartAttendance} className="w-full py-6 rounded-full border-4 border-[#00ff41] hover:bg-[#00ff41] text-[#00ff41] hover:text-black font-black uppercase tracking-widest transition-all">ESTABLISH_VAULT_SESSION</button>
+                   </div>
+                )}
+
                 {modalType === "Edit_Register" ? (
                   <div className="space-y-8">
                     <div className="flex flex-col gap-3"><label className="text-[10px] font-black text-white/40 uppercase tracking-widest">New_Subject_Identity</label><input type="text" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-sm" /></div>
@@ -798,7 +731,7 @@ const FacultyDashboard = () => {
                         Transmit_Broadcast
                     </button>
                   </div>
-                ) : (
+                ) : modalType !== "Create_Register" ? (
                   <div className="space-y-6">
                     <div className="flex flex-col gap-2 text-left">
                         <label className="text-[9px] font-black opacity-30 uppercase">Packet_Title</label>
@@ -836,7 +769,7 @@ const FacultyDashboard = () => {
                         Sync_Packet_to_Vault
                     </button>
                   </div>
-                )}
+                ) : null}
               </div>
             </motion.div>
           </motion.div>
