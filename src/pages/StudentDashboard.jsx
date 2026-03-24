@@ -3,6 +3,7 @@ import { Html5Qrcode } from 'html5-qrcode';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios'; 
 import useLiveSync from '../hooks/useLiveSync';
+import { verifyLocation } from '../utils/geoService'; // 🔥 NEW: Geo-location Service Imported
 
 const StudentDashboard = () => {
   const [scanResult, setScanResult] = useState(null);
@@ -46,7 +47,7 @@ const StudentDashboard = () => {
     try {
         const response = await axios.get(`${BACKEND_URL}/api/attendance/available-subjects`, {
             params: { section: currentSection },
-            withCredentials: true // 🔥 Added for session
+            withCredentials: true 
         });
         if (response.data.success) {
             setAvailableSubjects(response.data.subjects);
@@ -65,7 +66,7 @@ const StudentDashboard = () => {
             subjectName: subject.subjectName,
             facultyEmail: subject.facultyEmail
         }, {
-            withCredentials: true // 🔥 Added for session tracking
+            withCredentials: true 
         });
 
         if (response.data.success) {
@@ -93,7 +94,7 @@ const StudentDashboard = () => {
   const fetchNotesFromVault = async () => {
     try {
       const response = await axios.get(`${BACKEND_URL}/api/notes/fetch-notes`, {
-          withCredentials: true // 🔥 Added
+          withCredentials: true 
       });
       setUploadedNotes(response.data);
     } catch (err) {
@@ -112,7 +113,7 @@ const StudentDashboard = () => {
           regNo: currentRegNo,
           month: ledgerMonth
         },
-        withCredentials: true // 🔥 Added to ensure student session is active
+        withCredentials: true 
       });
       if (response.data.success) {
         setPersonalLedger(response.data.subjects); 
@@ -135,25 +136,35 @@ const StudentDashboard = () => {
 
   const handleMarkAttendance = async (decodedData) => {
     try {
-      setMarkingStatus("PROCESSING...");
+      setMarkingStatus("VERIFYING_LOCATION...");
+      
+      // 📍 STEP 1: NEURAL LOCATION LOCK
+      try {
+          await verifyLocation();
+      } catch (locError) {
+          setMarkingStatus("DENIED: OUTSIDE_CAMPUS");
+          alert(`🛑 [LOCATION_ERROR]: ${locError}`);
+          return;
+      }
+
+      setMarkingStatus("PROCESSING_UPLINK...");
       
       let qrPayload;
       try {
           qrPayload = JSON.parse(decodedData);
-          if (!qrPayload.email || !qrPayload.subject) throw new Error("Format_Incomplete");
+          if (!qrPayload.email || !qrPayload.subject) throw new Error("Format_Incomplete");
       } catch (e) {
-          // 🔥 FIXED: Removing "stark" fallback to prevent 404s
           setMarkingStatus("DENIED: INVALID_QR_DETECTED");
-          return;
+          return;
       }
 
       const response = await axios.post(`${BACKEND_URL}/api/attendance/mark-me`, {
         regNo: currentRegNo, 
-        facultyEmail: qrPayload.email, // 🔥 DYNAMIC: Uses data from scanned QR only
+        facultyEmail: qrPayload.email, 
         subjectName: qrPayload.subject,
         period: selectedPeriod
       }, {
-        withCredentials: true // 🔥 CRITICAL FIX: Sends session cookies to Backend
+        withCredentials: true 
       });
 
       if (response.data.success) {
@@ -165,7 +176,6 @@ const StudentDashboard = () => {
     }
   };
 
-  // 🔥 [ULTRA-FAST SCANNER LOGIC]: Upgraded FPS and QRBox for UPI-like speed
   useEffect(() => {
     if (isScanning && !markingStatus) {
       const timer = setTimeout(() => {
@@ -176,9 +186,9 @@ const StudentDashboard = () => {
           html5QrCode.start(
             { facingMode: "environment" },
             { 
-              fps: 30, // 🔥 Increased from 15 to 30 for high-speed scanning
-              qrbox: { width: 280, height: 280 } // 🔥 Optimized scanning zone
-            },
+              fps: 30, 
+              qrbox: { width: 280, height: 280 } 
+            },
             (decodedText) => {
               setScanResult(decodedText);
               if (navigator.vibrate) navigator.vibrate(100);
@@ -333,7 +343,7 @@ const StudentDashboard = () => {
                                                     ) : <span className="opacity-10">-</span>}
                                                 </td>
                                             );
-                                        })}
+                                      })}
                                     </tr>
                                 )) : (
                                     <tr>
@@ -530,7 +540,7 @@ const NoteCard = ({ subject, topic, faculty, date, id, _id, unit, fileUrl, title
         noteId: id || _id,
         fileUrl: fileUrl 
       }, {
-        withCredentials: true // 🔥 Added
+        withCredentials: true 
       });
 
       if (response.data.success) {
