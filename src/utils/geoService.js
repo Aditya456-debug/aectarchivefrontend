@@ -3,8 +3,8 @@
 // 🛑 THE MASTER KILL-SWITCH
 const ENABLE_GEOFENCE = true; // Presentation mein fail ho toh bas ise 'false' kar dena
 
-const COLLEGE_LAT = 28.1234;  // 📍 Google maps se yahan paste kar
-const COLLEGE_LON = 77.5678;  // 📍 Google maps se yahan paste kar
+const COLLEGE_LAT = 27.8455;  // 📍 Google maps se yahan paste kar
+const COLLEGE_LON = 78.0523;  // 📍 Google maps se yahan paste kar
 const ALLOWED_RADIUS_KM = 0.2; // 200 meters range
 
 const calculateDistance = (lat1, lon1, lat2, lon2) => {
