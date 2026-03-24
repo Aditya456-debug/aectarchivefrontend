@@ -1054,7 +1054,7 @@ const AdminPanel = ({ onBack }) => {
                            <span className="text-[9px] font-black text-[#00ff41] animate-pulse">VAULT</span>
                         </div>
                     </div>
-                  )));
+                  ))}
                   </div>
                 </motion.div>
               )}
