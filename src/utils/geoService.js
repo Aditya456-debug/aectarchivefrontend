@@ -1,7 +1,7 @@
 // frontend/src/utils/geoService.js
 
 // 🛑 THE MASTER KILL-SWITCH
-const ENABLE_GEOFENCE = true; // Presentation mein fail ho toh bas ise 'false' kar dena
+const ENABLE_GEOFENCE = false; // Presentation mein fail ho toh bas ise 'false' kar dena
 
 const COLLEGE_LAT = 27.8455;  // 📍 Google maps se yahan paste kar
 const COLLEGE_LON = 78.0523;  // 📍 Google maps se yahan paste kar

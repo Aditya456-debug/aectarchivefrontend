@@ -52,8 +52,8 @@ const FacultyDashboard = () => {
   const [academicSession, setAcademicSession] = useState("2024-2025");
   const [selectedSection, setSelectedSection] = useState("A");
 
-  // 🔥 NEW: FACULTY_NAME State for Professional Uplink
-  const [facultyName, setFacultyName] = useState("DR. VICTOR STARK");
+  // 🔥 NEW: Dynamic FACULTY_NAME State
+  const [facultyName, setFacultyName] = useState("IDENTIFYING_NODE...");
 
   // 🔥 NEW: Monthly Registers State
   const [monthlyRegisters, setMonthlyRegisters] = useState([]);
@@ -123,22 +123,28 @@ const FacultyDashboard = () => {
     } catch (error) { console.error("REGISTERS_FETCH_FAIL"); }
   };
 
-  // 🔥 [NEURAL_LINK]: Fetch Assigned Classes from Admin
+  // 🔥 [NEURAL_LINK]: Dynamic Name Mapping
   const fetchNeuralProfile = async () => {
     try {
         const response = await axios.get(`${BACKEND_URL}/api/faculty/profile/${currentFacultyEmail}`);
         if (response.data.success) {
-            setAssignedNodes(response.data.data.assignedClasses || []);
-            setFacultyName(response.data.data.name || facultyName);
+            setAssignedNodes(response.data.data.assignedClasses || response.data.data.assignedSubjects || []);
+            // Update facultyName with actual name from DB
+            if (response.data.data.facultyName || response.data.data.name) {
+                setFacultyName(response.data.data.facultyName || response.data.data.name);
+            }
         }
-    } catch (error) { console.error("NEURAL_PROFILE_FETCH_FAIL"); }
+    } catch (error) { 
+        console.error("NEURAL_PROFILE_FETCH_FAIL"); 
+        setFacultyName("UNAUTHORIZED_NODE");
+    }
   };
 
   // 🔥 NEW: LIVE SYNC HOOK IMPLEMENTATION (15s Heartbeat)
   const { isSyncing, syncNow } = useLiveSync(() => {
     fetchMyRegisters();
     fetchNeuralProfile();
-    fetchVaultFiles(); // 🔥 Sync files too
+    fetchVaultFiles(); 
   }, 15000);
 
   // 🔥 [CRUD_OPS]: Delete Register Logic
@@ -152,7 +158,7 @@ const FacultyDashboard = () => {
       });
       if(response.data.success) {
         alert("🔥 [DELETED]: Vault successfully updated!");
-        syncNow(); // Use live sync to refresh
+        syncNow(); 
       }
     } catch (err) { alert("Delete failed!"); }
   };
@@ -164,14 +170,14 @@ const FacultyDashboard = () => {
         oldSubject: editingRegister._id.subjectName,
         oldMonth: editingRegister._id.month,
         facultyEmail: currentFacultyEmail,
-    newSubject: subjectName,
+        newSubject: subjectName,
         newMonth: selectedMonth
       });
       if(response.data.success) {
         alert("💎 [UPDATED]: Changes Synced!");
         setShowModal(false);
         setEditingRegister(null);
-        syncNow(); // Use live sync to refresh
+        syncNow(); 
       }
     } catch (err) { alert("Update failed!"); }
   };
@@ -246,7 +252,7 @@ const FacultyDashboard = () => {
   const handleStartAttendance = async () => {
     if (!subjectName) return alert("Bhai, pehle Subject select toh kar lo!");
     
-    // 🔥 SYNC SELECTION WITH NEURAL LINK DATA
+    // 🔥 AUTO-LINK METADATA FROM NEURAL LINK
     const activeNode = assignedNodes.find(n => n.subject === subjectName);
     const finalCourse = activeNode ? activeNode.course : courseName;
     const finalSem = activeNode ? activeNode.semester : selectedSem;
@@ -325,7 +331,7 @@ const FacultyDashboard = () => {
         alert(`🚀 SYNC_SUCCESS: ${modalType} Uploaded!`);
         setShowModal(false);
         setLectureForm({ unit: '', date: '', topic: '', desc: '', time: '', file: null, title: '' });
-        fetchVaultFiles(); // Sync after upload
+        fetchVaultFiles(); 
       }
     } catch (error) { alert("System Error: Backend Uplink Fail!"); }
   };
@@ -407,7 +413,7 @@ const FacultyDashboard = () => {
 
   const openUploadModal = (type) => { 
     if (type === "Subject_Archives") {
-        setViewSubjectVault(true); // Open Explorer Instead of Form
+        setViewSubjectVault(true); 
     } else {
         setModalType(type); 
         setShowModal(true); 
@@ -418,7 +424,7 @@ const FacultyDashboard = () => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/faculty/create-lecture`, {
         method: 'POST',
-  0       headers: { 'Content-Type': 'application/json' },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...lectureForm, facultyEmail: currentFacultyEmail }),
       });
       const result = await response.json();
@@ -439,8 +445,8 @@ const FacultyDashboard = () => {
       
       {/* --- HEADER WITH SYNC PROTOCOL --- */}
       <header className="fixed top-0 left-0 w-full p-6 md:p-8 border-b-4 border-[#00ff41]/20 bg-black/60 backdrop-blur-xl flex justify-between items-center z-[100]">
-        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col">
-          <h1 className="text-xl md:text-3xl font-black italic tracking-tighter uppercase text-[#00ff41]">FACULTY_NODE</h1>
+        <motion.div initial={{ x: -20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} className="flex flex-col text-left">
+          <h1 className="text-xl md:text-3xl font-black italic tracking-tighter uppercase text-[#00ff41]">{facultyName}</h1>
           <div className="flex items-center gap-3 mt-1">
             <div className={`w-1.5 h-1.5 rounded-full ${isSyncing ? 'bg-orange-500 animate-spin' : 'bg-[#00ff41] animate-pulse'}`} />
             <p className="text-[7px] tracking-[0.4em] opacity-50 uppercase italic font-black text-[#00ff41]">
@@ -470,7 +476,7 @@ const FacultyDashboard = () => {
               
               {/* --- ASSIGNED CLASSES (NEURAL LINK) --- */}
               {assignedNodes.length > 0 && (
-                  <div className="md:col-span-2 lg:col-span-4 space-y-6 mb-4">
+                  <div className="md:col-span-2 lg:col-span-4 space-y-6 mb-4 text-left">
                       <h3 className="text-[10px] font-black italic text-white/40 uppercase tracking-[0.4em] border-l-4 border-[#a855f7] pl-4">Neural_Link_Assignments</h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                           {assignedNodes.map((node, idx) => (
@@ -498,15 +504,15 @@ const FacultyDashboard = () => {
               <UploadCardHub title="Broadcast_Alert" type="📡" accentColor="#facc15" glow="shadow-yellow-400/15" onClick={() => openUploadModal("Broadcast")} />
             </motion.div>
           ) : showVaultDetails ? (
-             <motion.div key="vault-cards-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-40">
+             <motion.div key="vault-cards-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 pb-40 text-left">
                   {monthlyRegisters.map((reg, i) => (
-                      <motion.div key={i} whileHover={{ scale: 1.05 }} className="relative bg-[#020617] border-2 border-[#00ff41]/30 p-8 rounded-[3rem] group hover:bg-[#00ff41]/5 transition-all overflow-hidden">
+                      <motion.div key={i} whileHover={{ scale: 1.05 }} className="relative bg-[#020617] border-2 border-[#00ff41]/30 p-8 rounded-[3rem] group hover:bg-[#00ff41]/5 transition-all overflow-hidden text-left">
                           <div className="absolute top-8 right-8 hidden md:flex gap-3 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                               <button onClick={() => { setEditingRegister(reg); setSubjectName(reg._id.subjectName); setSelectedMonth(reg._id.month); setModalType("Edit_Register"); setShowModal(true); }} className="w-10 h-10 rounded-xl bg-cyan-400 text-black text-sm font-black flex items-center justify-center hover:rotate-12 transition-all shadow-lg">✎</button>
                               <button onClick={() => handleDeleteRegister(reg)} className="w-10 h-10 rounded-xl bg-red-500 text-white text-sm font-black flex items-center justify-center hover:rotate-12 transition-all shadow-lg">✕</button>
                           </div>
                           <div onClick={() => handleDirectAttendance(reg)} className="cursor-pointer">
-                              <div className="flex justify-between items-start mb-8">
+                              <div className="flex justify-between items-start mb-8 w-full">
                                   <span className="text-[10px] font-black bg-[#00ff41] text-black px-5 py-1.5 rounded-full uppercase italic">{reg._id.month}</span>
                                   <span className="text-[9px] opacity-30 font-black tracking-widest">{reg._id.sessionYear}</span>
                               </div>
@@ -521,7 +527,7 @@ const FacultyDashboard = () => {
               </motion.div>
           ) : viewSubjectVault ? (
             // 🔥 THE NEW SUBJECT VAULT EXPLORER (Drill-down UI)
-            <motion.div key="explorer-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="w-full pb-40">
+            <motion.div key="explorer-view" initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} transition={{ duration: 0.3 }} className="w-full pb-40 text-left">
                 <div className="mb-8 border-l-4 border-[#f472b6] pl-6 text-left">
                     <h2 className="text-3xl md:text-5xl font-black uppercase italic tracking-tighter text-white">Vault_<span className="text-[#f472b6]">Explorer</span></h2>
                     <p className="text-[9px] opacity-40 uppercase tracking-[0.3em] mt-1 font-black">
@@ -530,7 +536,6 @@ const FacultyDashboard = () => {
                 </div>
 
                 {!selectedVaultSubject ? (
-                    // STEP 1: Show Subjects
                     <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {assignedNodes.length > 0 ? assignedNodes.map((node, idx) => (
                             <motion.div key={idx} whileHover={{ scale: 1.05 }} onClick={() => setSelectedVaultSubject(node.subject)} className="bg-white/5 border-2 border-[#f472b6]/30 p-8 rounded-[2.5rem] cursor-pointer group hover:bg-[#f472b6]/10 transition-all flex flex-col items-center justify-center text-center shadow-[0_0_20px_rgba(244,114,182,0.1)]">
@@ -546,7 +551,6 @@ const FacultyDashboard = () => {
                         )}
                     </div>
                 ) : !selectedVaultCategory ? (
-                    // STEP 2: Show Categories (Notes, Assign, PYQ) inside selected subject
                     <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         {[
                             { name: "Archive_Notes", icon: "📑", color: "cyan-400" },
@@ -560,7 +564,6 @@ const FacultyDashboard = () => {
                         ))}
                     </div>
                 ) : (
-                    // STEP 3: Show actual files for Subject + Category
                     <div className="space-y-4">
                         {vaultFiles.filter(file => 
                             file.faculty === currentFacultyEmail && 
@@ -576,9 +579,7 @@ const FacultyDashboard = () => {
                                             <p className="text-[9px] opacity-40 uppercase tracking-widest">{new Date(file.uploadedAt).toLocaleDateString()}</p>
                                         </div>
                                     </div>
-                                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#f472b6] hover:text-black transition-colors">
-                                        Download
-                                    </a>
+                                    <a href={file.fileUrl} target="_blank" rel="noopener noreferrer" className="px-6 py-2 bg-white/10 rounded-full text-[9px] font-black uppercase tracking-widest hover:bg-[#f472b6] hover:text-black transition-colors">Download</a>
                                 </motion.div>
                             ))
                         ) : (
@@ -591,10 +592,8 @@ const FacultyDashboard = () => {
                 )}
             </motion.div>
           ) : activeTab === 'attendance' ? (
-            <motion.div key="attendance-view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4 }} className="w-full pb-48">
+            <motion.div key="attendance-view" initial={{ opacity: 0, scale: 0.98 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.98 }} transition={{ duration: 0.4 }} className="w-full pb-48 text-left">
               <div className="flex flex-col lg:flex-row gap-10 mt-6">
-                
-                {/* --- QR & STATS COLUMN --- */}
                 <div className="lg:w-1/3 flex flex-col gap-8">
                   <div className="relative p-[4px] rounded-[3rem] overflow-hidden group shadow-[0_0_70px_rgba(0,255,65,0.2)]">
                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-50" />
@@ -610,15 +609,12 @@ const FacultyDashboard = () => {
                      </div>
                   </div>
                 </div>
-
-                {/* --- MANUAL TABLE COLUMN --- */}
                 <div className="lg:w-2/3">
                   <div className="rounded-[3rem] border-2 border-white/10 bg-white/[0.02] overflow-hidden backdrop-blur-xl h-full shadow-2xl">
                      <div className="p-8 border-b border-white/10 bg-white/5 flex flex-col sm:flex-row justify-between items-center gap-6">
                         <div className="flex flex-col text-left"><h5 className="text-xl font-black text-white italic uppercase tracking-tighter">Manual_Terminal_v4.2</h5><p className="text-[7px] opacity-40 uppercase font-black tracking-widest text-[#00ff41]">Packet_Injection_Protocol_Enabled</p></div>
                         <div className="relative w-full sm:w-64">
                           <input type="text" placeholder="IDENTITY_PROBE..." onChange={(e) => setSearchID(e.target.value)} className="w-full bg-black/40 border-2 border-white/10 rounded-2xl px-6 py-3 text-[10px] font-black outline-none focus:border-[#00ff41] text-white placeholder:opacity-20" />
-                          <span className="absolute right-4 top-1/2 -translate-y-1/2 opacity-20 text-xs">🔍</span>
                         </div>
                      </div>
                      <div className="max-h-[900px] md:max-h-[850px] overflow-y-auto no-scrollbar">
@@ -628,7 +624,7 @@ const FacultyDashboard = () => {
                                  <tr key={student.rollNo} className={`transition-all duration-500 group ${student.isPresent ? 'bg-[#00ff41]/5' : 'hover:bg-white/[0.03]'}`}>
                                     <td className="p-6 text-[10px] font-black opacity-30 text-center">{student.rollNo}</td>
                                     <td className="p-6 text-xs font-black text-[#00ff41]">{student.collegeId}</td>
-                                    <td className="p-6"><div className="flex flex-col text-left"><span className="text-sm font-black uppercase italic tracking-tighter group-hover:translate-x-1 transition-transform">{student.name}</span></div></td>
+                                    <td className="p-6 text-left"><span className="text-sm font-black uppercase italic tracking-tighter group-hover:translate-x-1 transition-transform">{student.name}</span></td>
                                     <td className="p-6">
                                       <div className="flex justify-center gap-3">
                                        <button onClick={() => toggleAttendance(attendance.indexOf(student), true)} className={`w-12 h-12 rounded-2xl font-black text-sm transition-all flex items-center justify-center ${student.isPresent ? 'bg-[#00ff41] text-black shadow-[0_0_20px_#00ff41]' : 'border-2 border-white/10 text-white/20 hover:border-[#00ff41]'}`}>P</button>
@@ -648,28 +644,27 @@ const FacultyDashboard = () => {
         </AnimatePresence>
       </div>
 
-      {/* --- ANIMATED MODALS --- */}
       <AnimatePresence>
         {showModal && (
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl">
-            <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} className="relative w-full max-w-2xl bg-[#020617] border-4 border-white/10 rounded-[3.5rem] p-8 md:p-14 overflow-y-auto max-h-[90vh] shadow-[0_0_150px_rgba(0,0,0,1)] no-scrollbar">
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="fixed inset-0 z-[1000] flex items-center justify-center p-4 bg-black/95 backdrop-blur-xl text-left">
+            <motion.div initial={{ scale: 0.9, y: 50, opacity: 0 }} animate={{ scale: 1, y: 0, opacity: 1 }} exit={{ scale: 0.9, y: 50, opacity: 0 }} className="relative w-full max-w-2xl bg-[#020617] border-4 border-white/10 rounded-[3.5rem] p-8 md:p-14 overflow-y-auto max-h-[90vh] shadow-[0_0_150px_rgba(0,0,0,1)] no-scrollbar text-left">
               <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-transparent via-cyan-400 to-transparent animate-pulse" />
               
-              <div className="flex flex-row justify-between items-center mb-12 w-full">
+              <div className="flex flex-row justify-between items-center mb-12 w-full text-left">
                 <div className="border-l-4 border-cyan-400 pl-6 text-left"><h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white">Uplink_<span className="text-cyan-400">{modalType.replace('_', ' ')}</span></h3><p className="text-[8px] opacity-30 uppercase font-black tracking-[0.3em] mt-1">Authorized_Access_Only</p></div>
                 <button onClick={() => { setShowModal(false); setEditingRegister(null); }} className="w-12 h-12 md:w-16 md:h-16 rounded-2xl border-2 border-white/10 flex flex-shrink-0 items-center justify-center hover:bg-red-500/20 hover:border-red-500/50 transition-all text-2xl bg-black/50 text-white">✕</button>
               </div>
 
               <div className="space-y-8 text-left">
                 {modalType === "Create_Register" && (
-                   <div className="space-y-8">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                          <div className="flex flex-col gap-2">
-                              <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Faculty_Name</label>
+                   <div className="space-y-8 text-left">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full text-left">
+                          <div className="flex flex-col gap-2 text-left">
+                              <label className="text-[9px] font-black text-white/40 uppercase tracking-widest text-left">Faculty_Name</label>
                               <input type="text" value={facultyName} readOnly className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none text-white/40 font-black uppercase text-xs cursor-not-allowed" />
                           </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Select_Assigned_Subject</label>
+                          <div className="flex flex-col gap-2 text-left">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest text-left">Select_Assigned_Subject</label>
                             <select value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
                                 <option value="" className="bg-black">-- SELECT_SUBJECT --</option>
                                 {assignedNodes.map((node, idx) => (
@@ -678,28 +673,28 @@ const FacultyDashboard = () => {
                             </select>
                           </div>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
-                          <div className="flex flex-col gap-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full text-left">
+                          <div className="flex flex-col gap-2 text-left">
                             <label className="text-[9px] font-black text-white/40 uppercase">Month</label>
                             <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black text-white">{m}</option>))}
                             </select>
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 text-left">
                             <label className="text-[9px] font-black text-white/40 uppercase">Course</label>
                             <select value={courseName} onChange={(e) => setCourseName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
                                <option value="B.TECH" className="bg-black">B.TECH</option> <option value="BBA" className="bg-black">BBA</option> <option value="MBA" className="bg-black">MBA</option> <option value="BCA" className="bg-black">BCA</option> <option value="MCA" className="bg-black">MCA</option> <option value="B.PHARMA" className="bg-black">B.PHARMA</option> <option value="D.PHARMA" className="bg-black">D.PHARMA</option>
                             </select>
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 text-left">
                             <label className="text-[9px] font-black text-white/40 uppercase">Semester</label>
                             <select value={selectedSem} onChange={(e) => setSelectedSem(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
                                {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s} className="bg-black">Sem {s}</option>)}
                             </select>
                           </div>
-                          <div className="flex flex-col gap-2">
+                          <div className="flex flex-col gap-2 text-left">
                             <label className="text-[9px] font-black text-white/40 uppercase">Section</label>
-                            <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
+                            <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs text-left" />
                           </div>
                       </div>
                       <button onClick={handleStartAttendance} className="w-full py-6 rounded-full border-4 border-[#00ff41] hover:bg-[#00ff41] text-[#00ff41] hover:text-black font-black uppercase tracking-widest transition-all">ESTABLISH_VAULT_SESSION</button>
@@ -707,25 +702,25 @@ const FacultyDashboard = () => {
                 )}
 
                 {modalType === "Edit_Register" ? (
-                  <div className="space-y-8">
-                    <div className="flex flex-col gap-3"><label className="text-[10px] font-black text-white/40 uppercase tracking-widest">New_Subject_Identity</label><input type="text" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-sm" /></div>
-                    <div className="flex flex-col gap-3"><label className="text-[10px] font-black text-white/40 uppercase tracking-widest">New_Month_Cycle</label><select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-sm">{["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black">{m}</option>))}</select></div>
+                  <div className="space-y-8 text-left">
+                    <div className="flex flex-col gap-3 text-left"><label className="text-[10px] font-black text-white/40 uppercase tracking-widest text-left">New_Subject_Identity</label><input type="text" value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-sm" /></div>
+                    <div className="flex flex-col gap-3 text-left"><label className="text-[10px] font-black text-white/40 uppercase tracking-widest text-left">New_Month_Cycle</label><select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-6 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-sm">{["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black">{m}</option>))}</select></div>
                     <button onClick={handleUpdateRegister} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_40px_rgba(34,211,238,0.4)] hover:scale-[1.02] transition-transform mt-6">Update_Vault_Logic</button>
                   </div>
                 ) : modalType === "Lecture" ? (
-                  <div className="space-y-6">
-                    <div className="grid grid-cols-2 gap-6">
-                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Unit</label><input type="text" placeholder="UNIT_01" value={lectureForm.unit} onChange={e => setLectureForm({...lectureForm, unit: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
-                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Time</label><input type="text" placeholder="10:00 AM" value={lectureForm.time} onChange={e => setLectureForm({...lectureForm, time: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                  <div className="space-y-6 text-left">
+                    <div className="grid grid-cols-2 gap-6 text-left">
+                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase text-left">Unit</label><input type="text" placeholder="UNIT_01" value={lectureForm.unit} onChange={e => setLectureForm({...lectureForm, unit: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                      <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase text-left">Time</label><input type="text" placeholder="10:00 AM" value={lectureForm.time} onChange={e => setLectureForm({...lectureForm, time: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
                     </div>
-                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
-                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
+                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase text-left">Topic</label><input type="text" placeholder="LECTURE_TITLE" value={lectureForm.topic} onChange={e => setLectureForm({...lectureForm, topic: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white" /></div>
+                    <div className="flex flex-col gap-2 text-left"><label className="text-[9px] font-black opacity-30 uppercase text-left">Description</label><textarea rows="3" placeholder="CONTENT_SUMMARY..." value={lectureForm.desc} onChange={e => setLectureForm({...lectureForm, desc: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-[#f87171] text-white resize-none" /></div>
                     <button onClick={handleCreateLecture} className="w-full py-5 bg-[#f87171] text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(248,113,113,0.3)] mt-4">Sync_Lecture_to_Vault</button>
                   </div>
                 ) : modalType === "Broadcast" ? (
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-2 text-left">
-                        <label className="text-[9px] font-black opacity-30 uppercase">Broadcast_Message</label>
+                  <div className="space-y-6 text-left">
+                    <div className="flex flex-col gap-2 text-left text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase text-left">Broadcast_Message</label>
                         <textarea 
                             rows="5" 
                             placeholder="TYPE_YOUR_ALERT_HERE..." 
@@ -734,19 +729,17 @@ const FacultyDashboard = () => {
                             className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-yellow-400 text-white resize-none" 
                         />
                     </div>
-                    <button onClick={handleBroadcastUpload} className="w-full py-5 bg-yellow-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(250,204,21,0.3)] mt-6 hover:scale-[1.02] transition-transform">
-                        Transmit_Broadcast
-                    </button>
+                    <button onClick={handleBroadcastUpload} className="w-full py-5 bg-yellow-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(250,204,21,0.3)] mt-6 hover:scale-[1.02] transition-transform">Transmit_Broadcast</button>
                   </div>
                 ) : modalType !== "Create_Register" ? (
-                  <div className="space-y-6">
-                    <div className="flex flex-col gap-2 text-left">
-                        <label className="text-[9px] font-black opacity-30 uppercase">Packet_Title</label>
+                  <div className="space-y-6 text-left">
+                    <div className="flex flex-col gap-2 text-left text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase text-left">Packet_Title</label>
                         <input type="text" placeholder="EX: MODULE_1_NOTES" value={lectureForm.title} onChange={e => setLectureForm({...lectureForm, title: e.target.value})} className="bg-white/5 border-2 border-white/10 p-5 rounded-xl outline-none focus:border-cyan-400 text-white" />
                     </div>
                     
-                    <div className="flex flex-col gap-2 text-left">
-                        <label className="text-[9px] font-black opacity-30 uppercase">Target_Subject</label>
+                    <div className="flex flex-col gap-2 text-left text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase text-left">Target_Subject</label>
                         <input 
                             type="text" 
                             placeholder="EX: OS / CN / JAVA" 
@@ -756,9 +749,9 @@ const FacultyDashboard = () => {
                         />
                     </div>
 
-                    <div className="flex flex-col gap-2 text-left mt-4">
-                        <label className="text-[9px] font-black opacity-30 uppercase">Select_Data_Packet (PDF/DOC)</label>
-                        <div className="relative border-2 border-dashed border-white/20 p-8 rounded-2xl hover:border-cyan-400/50 transition-colors flex flex-col items-center justify-center bg-black/20">
+                    <div className="flex flex-col gap-2 text-left mt-4 text-left">
+                        <label className="text-[9px] font-black opacity-30 uppercase text-left">Select_Data_Packet (PDF/DOC)</label>
+                        <div className="relative border-2 border-dashed border-white/20 p-8 rounded-2xl hover:border-cyan-400/50 transition-colors flex flex-col items-center justify-center bg-black/20 text-left">
                             <input 
                                 type="file" 
                                 accept=".pdf,.doc,.docx,.ppt,.pptx,.txt" 
@@ -772,9 +765,7 @@ const FacultyDashboard = () => {
                         </div>
                     </div>
 
-                    <button onClick={handleNoteUpload} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(34,211,238,0.3)] mt-6 hover:scale-[1.02] transition-transform">
-                        Sync_Packet_to_Vault
-                    </button>
+                    <button onClick={handleNoteUpload} className="w-full py-5 bg-cyan-400 text-black font-black uppercase tracking-[0.5em] text-[11px] rounded-full shadow-[0_0_30px_rgba(34,211,238,0.3)] mt-6 hover:scale-[1.02] transition-transform">Sync_Packet_to_Vault</button>
                   </div>
                 ) : null}
               </div>
@@ -789,12 +780,12 @@ const FacultyDashboard = () => {
 // --- COMPONENT: HUB ACTION CARDS ---
 const UploadCardHub = ({ title, type, accentColor, glow, onClick }) => (
     <motion.div whileHover={{ scale: 1.02, y: -5 }} onClick={onClick} className={`relative p-[4px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden group cursor-pointer ${glow} transition-all duration-500`} >
-        <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute inset-[-180%] opacity-20 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `conic-gradient(from_0deg, transparent, transparent, ${accentColor}, ${accentColor}, transparent, transparent)` }} />
+        <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute inset-[-180%] opacity-20 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `conic-gradient(from 0deg, transparent, transparent, ${accentColor}, ${accentColor}, transparent, transparent)` }} />
         <div className="relative bg-[#020617] rounded-[2.3rem] md:rounded-[2.8rem] p-10 md:p-12 overflow-hidden h-full flex flex-col items-start text-left border-2 border-white/5">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(${accentColor} 2px, transparent 2px), linear-gradient(90deg, ${accentColor} 2px, transparent 2px)`, backgroundSize: '40px 40px' }} />
-            <span className="text-5xl md:text-7xl mb-8 block drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">{type}</span>
-            <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white mb-4 leading-tight group-hover:text-white transition-colors">{title}</h3>
-            <div className="flex items-center gap-4"><div className="w-10 h-[3px]" style={{ backgroundColor: accentColor }} /><p className="text-[9px] opacity-30 uppercase tracking-[0.4em] font-black italic">Module_v4.2</p></div>
+            <span className="text-5xl md:text-7xl mb-8 block drop-shadow-[0_0_20px_rgba(255,255,255,0.2)] text-left">{type}</span>
+            <h3 className="text-2xl md:text-3xl font-black uppercase italic tracking-tighter text-white mb-4 leading-tight group-hover:text-white transition-colors text-left">{title}</h3>
+            <div className="flex items-center gap-4 text-left"><div className="w-10 h-[3px]" style={{ backgroundColor: accentColor }} /><p className="text-[9px] opacity-30 uppercase tracking-[0.4em] font-black italic text-left">Module_v4.2</p></div>
             <motion.div whileHover={{ rotate: 90 }} className="absolute bottom-8 right-10 w-14 h-14 rounded-2xl border-2 border-white/10 flex items-center justify-center text-3xl opacity-20 group-hover:opacity-100 group-hover:border-white/40 transition-all bg-black/40">⊕</motion.div>
         </div>
     </motion.div>
