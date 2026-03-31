@@ -164,7 +164,7 @@ const FacultyDashboard = () => {
         oldSubject: editingRegister._id.subjectName,
         oldMonth: editingRegister._id.month,
         facultyEmail: currentFacultyEmail,
-        newSubject: subjectName,
+    newSubject: subjectName,
         newMonth: selectedMonth
       });
       if(response.data.success) {
@@ -245,16 +245,23 @@ const FacultyDashboard = () => {
 
   const handleStartAttendance = async () => {
     if (!subjectName) return alert("Bhai, pehle Subject select toh kar lo!");
+    
+    // 🔥 SYNC SELECTION WITH NEURAL LINK DATA
+    const activeNode = assignedNodes.find(n => n.subject === subjectName);
+    const finalCourse = activeNode ? activeNode.course : courseName;
+    const finalSem = activeNode ? activeNode.semester : selectedSem;
+    const finalSec = activeNode ? activeNode.section : selectedSection;
+
     try {
       const formattedDate = selectedDate.split('-').reverse().join('/');
       const response = await axios.post(`${BACKEND_URL}/api/attendance/start-session`, {
         facultyEmail: currentFacultyEmail,
         facultyName: facultyName, 
         subjectName: subjectName.toUpperCase(),
-        course: courseName.toUpperCase(),
-        semester: selectedSem,
+        course: finalCourse.toUpperCase(),
+        semester: finalSem,
         year: selectedYear,    
-        section: selectedSection,
+        section: finalSec,
         period: selectedPeriod,
         selectedDate: formattedDate,
         month: selectedMonth,
@@ -411,7 +418,7 @@ const FacultyDashboard = () => {
     try {
       const response = await fetch(`${BACKEND_URL}/api/faculty/create-lecture`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+  0       headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...lectureForm, facultyEmail: currentFacultyEmail }),
       });
       const result = await response.json();
@@ -480,7 +487,7 @@ const FacultyDashboard = () => {
               )}
 
               {/* --- HUB ACTION CARDS --- */}
-              <UploadCardHub title="Create_Register" type="🔓" accentColor="#00ff41" glow="shadow-[#00ff41]/15" onClick={() => openUploadModal("Create_Register")} />
+              <UploadCardHub title="Create_Register" type="🔓" accentColor="#00ff41" glow="shadow-[#00ff41]/15" onClick={() => openUploadModal("Create_Register")} />
               <UploadCardHub title="Create_A_Lecture" type="👨‍🏫" accentColor="#f87171" glow="shadow-red-500/15" onClick={() => openUploadModal("Lecture")} />
               <UploadCardHub title="Lecture_Vault" type="🔐" accentColor="#00ff41" glow="shadow-[#00ff41]/15" onClick={() => setViewVault(true)} />
               <UploadCardHub title="Subject_Attendance" type="📊" accentColor="#3b82f6" glow="shadow-blue-500/15" onClick={() => setShowVaultDetails(true)} />
@@ -591,7 +598,7 @@ const FacultyDashboard = () => {
                 <div className="lg:w-1/3 flex flex-col gap-8">
                   <div className="relative p-[4px] rounded-[3rem] overflow-hidden group shadow-[0_0_70px_rgba(0,255,65,0.2)]">
                      <motion.div animate={{ rotate: 360 }} transition={{ duration: 8, repeat: Infinity, ease: "linear" }} className="absolute inset-[-150%] bg-[conic-gradient(from_0deg,transparent,transparent,#00ff41,#00ff41,transparent,transparent)] opacity-50" />
-                     <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
+                     <div className="relative bg-[#020617] rounded-[2.8rem] p-12 flex flex-col items-center">
                         <span className="text-[10px] font-black text-black bg-[#00ff41] px-4 py-1 rounded mb-8 uppercase italic tracking-widest">{subjectName}</span>
                         <div className="p-6 bg-white rounded-[2.5rem] mb-10 shadow-[0_0_40px_rgba(255,255,255,0.15)] transform group-hover:scale-105 transition-transform">
                            <QRCodeSVG value={qrToken} size={220} />
@@ -654,50 +661,50 @@ const FacultyDashboard = () => {
               </div>
 
               <div className="space-y-8 text-left">
-                {modalType === "Create_Register" && (
-                   <div className="space-y-8">
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
-                          <div className="flex flex-col gap-2">
-                              <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Faculty_Name</label>
-                              <input type="text" value={facultyName} readOnly className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none text-white/40 font-black uppercase text-xs cursor-not-allowed" />
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Select_Assigned_Subject</label>
-                            <select value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                                <option value="" className="bg-black">-- SELECT_SUBJECT --</option>
-                                {assignedNodes.map((node, idx) => (
-                                    <option key={idx} value={node.subject} className="bg-black">{node.subject} ({node.course})</option>
-                                ))}
-                            </select>
-                          </div>
-                      </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase">Month</label>
-                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                               {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black text-white">{m}</option>))}
-                            </select>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase">Course</label>
-                            <select value={courseName} onChange={(e) => setCourseName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                               <option value="B.TECH" className="bg-black">B.TECH</option> <option value="BBA" className="bg-black">BBA</option> <option value="MBA" className="bg-black">MBA</option> <option value="BCA" className="bg-black">BCA</option> <option value="MCA" className="bg-black">MCA</option> <option value="B.PHARMA" className="bg-black">B.PHARMA</option> <option value="D.PHARMA" className="bg-black">D.PHARMA</option>
-                            </select>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase">Semester</label>
-                            <select value={selectedSem} onChange={(e) => setSelectedSem(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
-                               {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s} className="bg-black">Sem {s}</option>)}
-                            </select>
-                          </div>
-                          <div className="flex flex-col gap-2">
-                            <label className="text-[9px] font-black text-white/40 uppercase">Section</label>
-                            <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
-                          </div>
-                      </div>
-                      <button onClick={handleStartAttendance} className="w-full py-6 rounded-full border-4 border-[#00ff41] hover:bg-[#00ff41] text-[#00ff41] hover:text-black font-black uppercase tracking-widest transition-all">ESTABLISH_VAULT_SESSION</button>
-                   </div>
-                )}
+                {modalType === "Create_Register" && (
+                   <div className="space-y-8">
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-8 w-full">
+                          <div className="flex flex-col gap-2">
+                              <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Faculty_Name</label>
+                              <input type="text" value={facultyName} readOnly className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none text-white/40 font-black uppercase text-xs cursor-not-allowed" />
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase tracking-widest">Select_Assigned_Subject</label>
+                            <select value={subjectName} onChange={(e) => setSubjectName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                                <option value="" className="bg-black">-- SELECT_SUBJECT --</option>
+                                {assignedNodes.map((node, idx) => (
+                                    <option key={idx} value={node.subject} className="bg-black">{node.subject} ({node.course})</option>
+                                ))}
+                            </select>
+                          </div>
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 w-full">
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Month</label>
+                            <select value={selectedMonth} onChange={(e) => setSelectedMonth(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map(m => (<option key={m} value={m} className="bg-black text-white">{m}</option>))}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Course</label>
+                            <select value={courseName} onChange={(e) => setCourseName(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               <option value="B.TECH" className="bg-black">B.TECH</option> <option value="BBA" className="bg-black">BBA</option> <option value="MBA" className="bg-black">MBA</option> <option value="BCA" className="bg-black">BCA</option> <option value="MCA" className="bg-black">MCA</option> <option value="B.PHARMA" className="bg-black">B.PHARMA</option> <option value="D.PHARMA" className="bg-black">D.PHARMA</option>
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Semester</label>
+                            <select value={selectedSem} onChange={(e) => setSelectedSem(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs">
+                               {[1,2,3,4,5,6,7,8].map(s => <option key={s} value={s} className="bg-black">Sem {s}</option>)}
+                            </select>
+                          </div>
+                          <div className="flex flex-col gap-2">
+                            <label className="text-[9px] font-black text-white/40 uppercase">Section</label>
+                            <input type="text" placeholder="A / B" value={selectedSection} onChange={(e) => setSelectedSection(e.target.value)} className="bg-white/5 border-2 border-white/10 p-5 rounded-2xl outline-none focus:border-[#00ff41] text-[#00ff41] font-black uppercase text-xs" />
+                          </div>
+                      </div>
+                      <button onClick={handleStartAttendance} className="w-full py-6 rounded-full border-4 border-[#00ff41] hover:bg-[#00ff41] text-[#00ff41] hover:text-black font-black uppercase tracking-widest transition-all">ESTABLISH_VAULT_SESSION</button>
+                   </div>
+                )}
 
                 {modalType === "Edit_Register" ? (
                   <div className="space-y-8">
@@ -782,7 +789,7 @@ const FacultyDashboard = () => {
 // --- COMPONENT: HUB ACTION CARDS ---
 const UploadCardHub = ({ title, type, accentColor, glow, onClick }) => (
     <motion.div whileHover={{ scale: 1.02, y: -5 }} onClick={onClick} className={`relative p-[4px] rounded-[2.5rem] md:rounded-[3rem] overflow-hidden group cursor-pointer ${glow} transition-all duration-500`} >
-        <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute inset-[-180%] opacity-20 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `conic-gradient(from 0deg, transparent, transparent, ${accentColor}, ${accentColor}, transparent, transparent)` }} />
+        <motion.div animate={{ rotate: [0, 360] }} transition={{ duration: 6, repeat: Infinity, ease: "linear" }} className="absolute inset-[-180%] opacity-20 group-hover:opacity-100 transition-opacity duration-500" style={{ background: `conic-gradient(from_0deg, transparent, transparent, ${accentColor}, ${accentColor}, transparent, transparent)` }} />
         <div className="relative bg-[#020617] rounded-[2.3rem] md:rounded-[2.8rem] p-10 md:p-12 overflow-hidden h-full flex flex-col items-start text-left border-2 border-white/5">
             <div className="absolute inset-0 opacity-[0.03] pointer-events-none" style={{ backgroundImage: `linear-gradient(${accentColor} 2px, transparent 2px), linear-gradient(90deg, ${accentColor} 2px, transparent 2px)`, backgroundSize: '40px 40px' }} />
             <span className="text-5xl md:text-7xl mb-8 block drop-shadow-[0_0_20px_rgba(255,255,255,0.2)]">{type}</span>
